@@ -43,17 +43,13 @@ describe('TL02 — troca de senha', () => {
     expect(calls.some((call) => call.path === '/me/password')).toBe(false);
   });
 
-  it('senha válida: E05, novo login com a senha nova e tela inicial do perfil', async () => {
-    const { client, calls, router } = setup({
-      'POST /me/password': () => new Response(null, { status: 204 }),
-    });
-    client.addAccount(VIEWER.email, 'MinhaSenhaNova123', 'token-novo');
+  it('senha válida: E05, perfil recarregado na mesma sessão e tela inicial do perfil', async () => {
+    const { client, router } = setup();
     let afterChange = false;
     const user = userEvent.setup();
     // Depois da troca, o E04 passa a informar mustChangePassword: false.
-    const meHandler = () => json({ data: afterChange ? VIEWER : PENDING });
-    mockApi({
-      'GET /me': meHandler,
+    const { calls } = mockApi({
+      'GET /me': () => json({ data: afterChange ? VIEWER : PENDING }),
       'POST /me/password': () => {
         afterChange = true;
         return new Response(null, { status: 204 });
@@ -66,8 +62,18 @@ describe('TL02 — troca de senha', () => {
 
     expect(await screen.findByText('Senha alterada com sucesso.')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/painel');
-    expect(client.signInCalls).toEqual([{ email: VIEWER.email, password: 'MinhaSenhaNova123' }]); // gitleaks:allow — senha fictícia de teste
-    expect(calls).toBeDefined();
+    // O E05 mantém a sessão atual (encerra só as outras): nenhum novo login com a senha nova.
+    expect(client.signInCalls).toEqual([]);
+    expect(client.signOutCalls).toBe(0);
+    const changed = calls.findIndex((call) => call.path === '/me/password');
+    const afterPassword = calls.slice(changed, changed + 2);
+    expect(afterPassword.map((call) => `${call.method} ${call.path}`)).toEqual([
+      'POST /me/password',
+      'GET /me',
+    ]);
+    expect(afterPassword.every((call) => call.authorization === 'Bearer token-temporario')).toBe(
+      true,
+    );
   });
 
   it('400 do backend mostra mensagem sem repetir a senha', async () => {

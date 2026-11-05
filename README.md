@@ -11,14 +11,14 @@ Este é um **projeto independente**. Ele tem as próprias dependências, lockfil
 | Camada    | Tecnologias                                                                                                                                           |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Interface | React 19.3, TypeScript 5.9 (strict), Vite 8, Tailwind CSS 4.3, React Router 8, TanStack Query 5, React Hook Form 7, Lucide React, qrcode.react 4      |
-| Sessão    | supabase-js 2 (Supabase Auth, somente com a chave **publicável**)                                                                                     |
+| Sessão    | autenticação da própria API (E44 login, E45 renovação, E46 logout), consumida por HTTP; sem SDK de terceiros                                          |
 | Qualidade | Vitest 5, React Testing Library, jsdom, Playwright 1.63 (E2E), jsqr, ESLint 10 + typescript-eslint, Prettier 3 (com ordenação de classes do Tailwind) |
 
 ## Pré-requisitos
 
 - **Node.js 24 LTS** (versão em `.nvmrc`; também verificado com Node 22.12+) e **npm 10+**.
 - A **API do FHDOD** em execução para usar o sistema (localmente em `http://localhost:3333`).
-- Para o login administrativo: o Supabase Auth (localmente, iniciado no projeto da API com `npm run db:start`).
+- O login administrativo é feito pela própria API: não há serviço de autenticação separado para configurar no frontend.
 
 ## Estrutura
 
@@ -29,7 +29,7 @@ frontend/
 │   ├── app/                     provedores, rotas, layouts (público e administrativo) e página 404
 │   ├── components/ui/           componentes reutilizáveis (botão, campos, diálogos, estados, etiqueta)
 │   ├── features/<domínio>/      páginas, componentes da área e <domínio>-api.ts (tipos e hooks)
-│   ├── lib/                     env (variáveis VITE_*), api-client (cliente HTTP único), supabase,
+│   ├── lib/                     env (variáveis VITE_*), api-client (cliente HTTP único),
 │   │                            formatação pt-BR e erros de formulário
 │   ├── styles/                  Tailwind e tokens visuais
 │   └── test/                    setup do Vitest e helpers dos testes de componentes
@@ -58,12 +58,10 @@ cp .env.example .env
 
 Arquivo `.env` **nesta pasta** (copiado de `.env.example`). Tudo que começa com `VITE_` é incluído no JavaScript enviado ao navegador: **nunca coloque segredos ou credenciais privadas aqui**.
 
-| Variável                        | Uso                                                                                                                                                                   |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `VITE_API_URL`                  | endereço da API, **sem** `/api/v1` (o cliente HTTP acrescenta o prefixo). Desenvolvimento: `http://localhost:3333`. Produção: `https://…` (obrigatório). Veja abaixo. |
-| `VITE_APP_ENV`                  | `development`, `test` ou `production`                                                                                                                                 |
-| `VITE_SUPABASE_URL`             | URL do Supabase Auth (local: `http://127.0.0.1:54321`; produção: `https://<projeto>.supabase.co`)                                                                     |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | chave **publicável** do Supabase (a chave secreta é recusada pela interface)                                                                                          |
+| Variável       | Uso                                                                                                                                                                   |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_API_URL` | endereço da API, **sem** `/api/v1` (o cliente HTTP acrescenta o prefixo). Desenvolvimento: `http://localhost:3333`. Produção: `https://…` (obrigatório). Veja abaixo. |
+| `VITE_APP_ENV` | `development`, `test` ou `production`                                                                                                                                 |
 
 As variáveis são lidas e validadas em um único lugar, [`src/lib/env.ts`](src/lib/env.ts); todas as requisições à API passam pelo cliente HTTP de [`src/lib/api-client.ts`](src/lib/api-client.ts). Não há URLs da API espalhadas pelo código.
 
@@ -73,6 +71,19 @@ As variáveis são lidas e validadas em um único lugar, [`src/lib/env.ts`](src/
 - **Mesma origem:** com `VITE_API_URL` vazia, as chamadas vão para `/api/v1` no próprio endereço da página. Em desenvolvimento, o Vite encaminha `/api` para `http://localhost:3333` (proxy apenas de desenvolvimento; outro destino com `VITE_PROXY_TARGET`). Em produção, isso exige um proxy reverso que encaminhe `/api` para a API.
 
 Na publicação, cadastre o endereço público do frontend em `CORS_ORIGIN` e em `PUBLIC_APP_URL` da API (links e QR Code das pesquisas).
+
+## Autenticação
+
+O login administrativo usa a autenticação da própria API (JWT de acesso + token de renovação de uso único), sempre por HTTP e sem nenhuma variável própria no frontend. A implementação fica em [`src/features/auth/auth-client.ts`](src/features/auth/auth-client.ts) e [`AuthProvider.tsx`](src/features/auth/AuthProvider.tsx):
+
+- **Login** — `POST /api/v1/auth/login` com e-mail e senha. Qualquer recusa (401, 403 ou 400) mostra a mesma mensagem genérica; 429 mostra o aviso de muitas tentativas. A senha nunca é guardada.
+- **Sessão** — os tokens ficam no `sessionStorage` da aba (chave `fhdod-admin-auth`): sobrevivem ao recarregamento e são apagados ao fechar a aba ou sair. O token de acesso vai somente no cabeçalho `Authorization: Bearer` (sem cookies). O perfil e as permissões vêm sempre do `GET /api/v1/me`.
+- **Renovação** — `POST /api/v1/auth/refresh` cerca de 1 minuto antes de o token de acesso expirar (prazo calculado com o `expiresIn` da resposta, no relógio do navegador), ou depois de um 401 da API, com uma única nova tentativa da requisição. O token de renovação é **rotacionado**: cada resposta traz um novo, gravado antes de liberar as requisições. Requisições simultâneas compartilham **uma só** renovação, para nunca reapresentar um token já trocado.
+- **Fim da sessão** — renovação recusada (401) leva ao login com o aviso "Sua sessão terminou"; 403 `ACCOUNT_DISABLED` leva ao aviso de conta desativada. Falha de rede na renovação não encerra a sessão (permite tentar de novo).
+- **Logout** — `POST /api/v1/auth/logout` revoga a sessão no servidor; o armazenamento e o cache de consultas em memória são apagados mesmo sem rede.
+- **Troca de senha** — `POST /api/v1/me/password` encerra as outras sessões e mantém a atual; a interface só recarrega o perfil.
+
+Ocultar menus e telas pelas permissões é conveniência de navegação: o controle de acesso é sempre do backend.
 
 ## Execução
 
@@ -94,7 +105,7 @@ A página inicial mostra "API disponível" quando a comunicação com a API est�
 | `npm run format:check`  | Prettier; `npm run format` corrige                                                         |
 | `npm test`              | testes de componentes e unidade (Vitest + jsdom); não precisam da API nem do `.env`        |
 | `npm run test:coverage` | cobertura                                                                                  |
-| `npm run test:e2e`      | ponta a ponta com Playwright, Chrome instalado, API e Supabase Auth locais (veja abaixo)   |
+| `npm run test:e2e`      | ponta a ponta com Playwright, Chrome instalado e API local (veja abaixo)                   |
 
 Se o Vitest acusar `Timeout waiting for worker to respond` em máquina sobrecarregada, use `npx vitest run --maxWorkers=2`.
 
@@ -102,7 +113,7 @@ Se o Vitest acusar `Timeout waiting for worker to respond` em máquina sobrecarr
 
 A E2E sobe a API com o comando `npm run dev:no-watch` dela (porta 3334, banco de **teste**) e o frontend (porta 5174, com `VITE_API_URL=http://localhost:3334`, passando pelo CORS) e cria/exclui contas fictícias por meio do comando `npm run e2e:fixture` da API. O frontend não importa código da API: só executa os comandos publicados por ela.
 
-1. No projeto da API: `npm run db:start` e `.env` com `TEST_DATABASE_URL`, `SUPABASE_URL` e `SUPABASE_SECRET_KEY` locais.
+1. No projeto da API: banco local preparado e `.env` com as variáveis do banco de **teste** (`TEST_DB_*`) e `JWT_SECRET`, conforme o README da API. A configuração da E2E passa à API o banco de teste (`DB_*` a partir de `TEST_DB_*`), o mesmo usado pelo `npm run e2e:fixture`.
 2. Aqui: `npm run test:e2e`.
 
 | Variável           | Padrão                    | Uso                                                                                                                                |

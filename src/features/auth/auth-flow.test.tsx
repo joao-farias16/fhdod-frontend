@@ -67,7 +67,7 @@ describe('TL01 — login administrativo', () => {
     expect(router.state.location.pathname).toBe('/login');
   });
 
-  it('valida campos obrigatórios sem chamar o Supabase', async () => {
+  it('valida campos obrigatórios sem chamar a API de login', async () => {
     const client = new FakeAuthClient();
     mockApi({});
     renderApp('/login', client);
@@ -236,7 +236,7 @@ describe('proteção de rotas e logout (RF02)', () => {
     expect(router.state.location.pathname).toBe('/admin/auditoria');
   });
 
-  it('sessão expirada (evento do Supabase) volta ao login com aviso', async () => {
+  it('renovação recusada (sessão expirada) volta ao login com aviso', async () => {
     const client = new FakeAuthClient();
     client.token = 'token-vi';
     mockApi({ 'GET /me': () => json({ data: VIEWER }) });
@@ -273,6 +273,64 @@ describe('proteção de rotas e logout (RF02)', () => {
     expect(router.state.location.pathname).toBe('/login');
     expect(client.signOutCalls).toBeGreaterThanOrEqual(1);
     expect(meCalls).toBe(1);
+  });
+});
+
+describe('renovação após 401 (E45)', () => {
+  it('401 em uso: renova uma vez e repete a requisição com o novo token', async () => {
+    const client = new FakeAuthClient();
+    client.token = 'token-antigo';
+    client.renewedToken = 'token-novo';
+    const { calls } = mockApi({
+      'GET /me': (call) =>
+        call.authorization === 'Bearer token-novo'
+          ? json({ data: VIEWER })
+          : apiError(401, 'UNAUTHENTICATED'),
+    });
+    renderApp('/painel', client);
+
+    expect(
+      await screen.findByRole('heading', { name: `Olá, ${VIEWER.fullName}` }),
+    ).toBeInTheDocument();
+    expect(client.refreshCalls).toEqual(['token-antigo']);
+    expect(client.signOutCalls).toBe(0);
+    expect(calls.map((call) => call.authorization)).toContain('Bearer token-novo');
+  });
+
+  it('401 em uso com renovação recusada: encerra a sessão e volta ao login', async () => {
+    const client = new FakeAuthClient();
+    client.token = 'token-sa';
+    mockApi({
+      'GET /me': () => json({ data: SA }),
+      'GET /admin/users': () => apiError(401, 'UNAUTHENTICATED'),
+      'GET /admin/sectors': () => json({ data: [] }),
+    });
+    const { router } = renderApp('/admin/usuarios', client);
+
+    expect(
+      await screen.findByText('Sua sessão terminou. Entre novamente para continuar.'),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/login');
+    expect(client.refreshCalls).toEqual(['token-sa']);
+    expect(client.signOutCalls).toBeGreaterThanOrEqual(1);
+  });
+
+  it('401 de novo depois da renovação: não renova em ciclo, encerra a sessão', async () => {
+    const client = new FakeAuthClient();
+    client.token = 'token-sa';
+    client.renewedToken = 'token-renovado';
+    mockApi({
+      'GET /me': () => json({ data: SA }),
+      'GET /admin/users': () => apiError(401, 'UNAUTHENTICATED'),
+      'GET /admin/sectors': () => json({ data: [] }),
+    });
+    const { router } = renderApp('/admin/usuarios', client);
+
+    expect(
+      await screen.findByText('Sua sessão terminou. Entre novamente para continuar.'),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/login');
+    expect(client.refreshCalls).toHaveLength(1);
   });
 });
 

@@ -28,7 +28,7 @@ function redirectTarget(state: unknown): string | undefined {
 }
 
 /**
- * TL01 — Login administrativo (/login, RF01). E-mail e senha no Supabase Auth; o perfil vem do E04
+ * TL01 — Login administrativo (/login, RF01). E-mail e senha na API (E44); o perfil vem do E04
  * e define a tela inicial ou a troca obrigatória de senha. Erro sempre genérico.
  */
 export function LoginPage() {

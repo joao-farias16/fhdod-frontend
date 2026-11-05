@@ -5,19 +5,39 @@ import { defineConfig } from '@playwright/test';
 
 import { API_DIR, API_URL, BACKEND_PORT, FRONTEND_PORT } from './e2e/environment';
 
-// Variáveis locais da API (banco de TESTE e Supabase local); nunca serviços remotos.
+// Variáveis locais da API (banco de TESTE, JWT_SECRET etc.); nunca serviços remotos.
 const apiEnvFile = resolve(API_DIR, '.env');
 if (existsSync(apiEnvFile)) process.loadEnvFile(apiEnvFile);
 
 /**
- * Testes ponta a ponta (Seção 12) com Supabase Auth local, backend e frontend reais. Portas
+ * DB_* da API apontando para o banco de TESTE, com as mesmas regras do script e2e:fixture da API
+ * (scripts/db/connection.ts): TEST_DB_HOST/PORT/USER vazias usam a DB_* do .env (já carregada
+ * acima); TEST_DB_PASSWORD, se definida, vale mesmo vazia; TEST_DB_NAME padrão fhdod_test.
+ */
+function testDatabaseEnv(): Record<string, string> {
+  const result: Record<string, string> = {
+    DB_NAME: process.env.TEST_DB_NAME || 'fhdod_test',
+    DB_SSL: 'false',
+  };
+  for (const name of ['DB_HOST', 'DB_PORT', 'DB_USER']) {
+    const value = process.env[`TEST_${name}`];
+    if (value !== undefined && value !== '') result[name] = value;
+  }
+  const password = process.env.TEST_DB_PASSWORD;
+  if (password !== undefined) result.DB_PASSWORD = password;
+  return result;
+}
+
+/**
+ * Testes ponta a ponta (Seção 12) com a autenticação da API, backend e frontend reais. Portas
  * próprias (3334 e 5174) para não reutilizar servidores de desenvolvimento: o backend dos testes
- * usa TEST_DATABASE_URL, e as contas fictícias são criadas e excluídas pelo global-setup.
+ * usa o banco de teste (TEST_DB_*, como o `npm run e2e:fixture` da API), e as contas fictícias
+ * são criadas e excluídas pelo global-setup.
  * O frontend chama a API diretamente (VITE_API_URL), como na publicação, passando pelo CORS.
  *
  * A API é um projeto separado: FHDOD_API_DIR aponta para a pasta dele (padrão: a pasta acima
  * desta, enquanto o frontend estiver dentro do repositório da API). Usa o Chrome instalado
- * (channel: 'chrome'), sem baixar navegadores. Exige `npm run db:start` no projeto da API.
+ * (channel: 'chrome'), sem baixar navegadores. Exige o MySQL local e o banco de teste da API.
  */
 export default defineConfig({
   testDir: './e2e',
@@ -54,7 +74,8 @@ export default defineConfig({
       timeout: 120_000,
       env: {
         PORT: BACKEND_PORT,
-        DATABASE_URL: process.env.TEST_DATABASE_URL ?? '',
+        // A API lê DB_*; os dados E2E ficam no banco de TESTE (TEST_DB_*), como no e2e:fixture.
+        ...testDatabaseEnv(),
         CORS_ORIGIN: `http://localhost:${FRONTEND_PORT}`,
         // Links e QR Code das pesquisas apontam para o frontend dos testes (ET05, T02).
         PUBLIC_APP_URL: `http://localhost:${FRONTEND_PORT}`,

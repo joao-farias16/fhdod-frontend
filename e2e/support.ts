@@ -60,8 +60,8 @@ export interface E2EFixture {
 }
 
 /**
- * Executa o script `npm run e2e:fixture` do projeto da API (banco de teste e Supabase Auth
- * locais). O frontend não importa código da API: apenas aciona o comando publicado por ela.
+ * Executa o script `npm run e2e:fixture` do projeto da API (banco MySQL de teste local,
+ * TEST_DB_*). O frontend não importa código da API: apenas aciona o comando publicado por ela.
  */
 export function runFixture(command: 'setup' | 'teardown'): void {
   const result = spawnSync('npm', ['run', 'e2e:fixture', '--', command, FIXTURE_FILE], {

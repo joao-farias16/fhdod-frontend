@@ -12,10 +12,13 @@ import type { Me } from '../features/auth/auth-types';
 // teste de cada arquivo dependa do tempo de transformação do módulo.
 await import('../app/AdminArea');
 
-/** Cliente de autenticação falso: contas em memória, sem Supabase. */
+/** Cliente de autenticação falso: contas em memória, sem a API de autenticação (E44–E46). */
 export class FakeAuthClient implements AuthClient {
   token: string | null = null;
   signOutCalls = 0;
+  /** Token devolvido pela próxima renovação depois de um 401 (null = renovação recusada). */
+  renewedToken: string | null = null;
+  readonly refreshCalls: string[] = [];
   readonly signInCalls: { email: string; password: string }[] = [];
   private readonly accounts = new Map<string, { password: string; token: string }>();
   private listeners = new Set<(token: string | null) => void>();
@@ -26,6 +29,13 @@ export class FakeAuthClient implements AuthClient {
   }
 
   getAccessToken() {
+    return Promise.resolve(this.token);
+  }
+
+  refreshAccessToken(staleToken: string) {
+    if (this.token !== staleToken) return Promise.resolve(this.token);
+    this.refreshCalls.push(staleToken);
+    this.token = this.renewedToken;
     return Promise.resolve(this.token);
   }
 
@@ -51,7 +61,7 @@ export class FakeAuthClient implements AuthClient {
     };
   }
 
-  /** Simula sessão expirada/encerrada (evento do supabase-js). */
+  /** Simula renovação recusada pela API (sessão revogada ou expirada). */
   expire(): void {
     this.token = null;
     for (const listener of this.listeners) listener(null);

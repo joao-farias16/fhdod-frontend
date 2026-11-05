@@ -1,6 +1,6 @@
 /**
  * Fluxo administrativo ponta a ponta (TL16 → TL02 → TL17; RF03, RF04, RF06, RF09, RF11) com
- * Supabase Auth local real: o SA cadastra um usuário (senha temporária exibida uma vez), o usuário
+ * Autenticação da API (E44–E46) real: o SA cadastra um usuário (senha temporária exibida uma vez), o usuário
  * troca a senha no primeiro acesso, o SA o desativa (login bloqueado) e consulta a auditoria.
  * Executado somente no projeto de computador (playwright.config.ts); o de celular cobre o T12.
  */

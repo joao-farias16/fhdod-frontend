@@ -9,7 +9,7 @@ type AppRouter = ReturnType<typeof createBrowserRouter>;
 interface AppProps {
   router: AppRouter;
   queryClient: QueryClient;
-  /** Cliente de autenticação falso para testes; em produção, o Supabase Auth é carregado sob demanda. */
+  /** Cliente de autenticação falso para testes; em produção, usa a autenticação da API (E44–E46). */
   authClient?: AuthClient;
 }
 
