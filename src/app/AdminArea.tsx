@@ -21,8 +21,8 @@ import { UsersPage } from '../features/users/UsersPage';
 import { AdminLayout } from './AdminLayout';
 
 /**
- * Área administrativa (TL01–TL08, TL12–TL14, TL16 e TL17). Carregada sob demanda pelas rotas: o supabase-js e
- * a sessão existem somente aqui, nunca na pesquisa pública nem na TV Wall (Seção 7, RF72).
+ * Área administrativa (TL01–TL08, TL12–TL14, TL16 e TL17). Carregada sob demanda pelas rotas: o cliente de
+ * autenticação e a sessão existem somente aqui, nunca na pesquisa pública nem na TV Wall (Seção 7, RF72).
  */
 export function AdminRoot() {
   return (

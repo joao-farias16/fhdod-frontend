@@ -10,7 +10,7 @@ import {
 } from 'react';
 
 import { apiDownload, ApiError, type ApiRequestInit, apiRequest } from '../../lib/api-client';
-import { type AuthClient, createSupabaseAuthClient } from './auth-client';
+import { type AuthClient, createApiAuthClient } from './auth-client';
 import {
   AuthClientContext,
   type AuthContextValue,
@@ -27,7 +27,6 @@ const SIGN_IN_MESSAGES = {
   invalid_credentials: GENERIC_LOGIN_ERROR,
   rate_limited: 'Muitas tentativas de acesso. Aguarde alguns minutos e tente novamente.',
   network: 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.',
-  unavailable: 'O acesso administrativo não está configurado neste ambiente.',
 } as const;
 
 const SESSION_EXPIRED = 'Sua sessão terminou. Entre novamente para continuar.';
@@ -39,12 +38,13 @@ async function fetchMe(token: string): Promise<Me> {
 }
 
 /**
- * Estado da sessão administrativa (Seção 6, fluxo de acesso): login no Supabase Auth, perfil e
- * permissões pelo E04, troca de senha pendente, logout com limpeza dos dados em memória.
+ * Estado da sessão administrativa (Seção 6, fluxo de acesso): login, renovação e logout na API
+ * (E44–E46), perfil e permissões pelo E04, troca de senha pendente, logout com limpeza dos dados
+ * em memória.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const injected = useContext(AuthClientContext);
-  const client = useMemo<AuthClient>(() => injected ?? createSupabaseAuthClient(), [injected]);
+  const client = useMemo<AuthClient>(() => injected ?? createApiAuthClient(), [injected]);
   const queryClient = useQueryClient();
   const [state, setState] = useState<AuthState>({ status: 'loading' });
   const stateRef = useRef(state);
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [client, queryClient],
   );
 
-  /** Converte a sessão guardada pelo Supabase (token ou nada) em perfil carregado pelo E04. */
+  /** Converte a sessão guardada (token ou nada) em perfil carregado pelo E04. */
   const resolveSession = useCallback(
     async (token: string | null) => {
       if (token === null) {
@@ -74,7 +74,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       try {
-        setState({ status: 'signedIn', me: await fetchMe(token) });
+        let me: Me;
+        try {
+          me = await fetchMe(token);
+        } catch (error) {
+          // Token recusado pelo servidor: uma renovação (E45) antes de desistir da sessão.
+          if (!(error instanceof ApiError && error.status === 401)) throw error;
+          const renewed = await client.refreshAccessToken(token);
+          if (renewed === null) throw error;
+          me = await fetchMe(renewed);
+        }
+        setState({ status: 'signedIn', me });
       } catch (error) {
         if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
           await signOut(error.code === 'ACCOUNT_DISABLED' ? ACCOUNT_DISABLED : SESSION_EXPIRED);
@@ -83,18 +93,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setState({ status: 'error', message: 'Não foi possível verificar sua sessão.' });
       }
     },
-    [signOut],
+    [client, signOut],
   );
 
-  const sessionUnavailable = useCallback(() => {
-    setState({ status: 'error', message: 'Não foi possível verificar sua sessão.' });
-  }, []);
+  const sessionUnavailable = useCallback(
+    async (error: unknown) => {
+      // Renovação recusada por conta desativada: encerra; rede/servidor: permite tentar de novo.
+      if (error instanceof ApiError && error.code === 'ACCOUNT_DISABLED') {
+        await signOut(ACCOUNT_DISABLED);
+        return;
+      }
+      setState({ status: 'error', message: 'Não foi possível verificar sua sessão.' });
+    },
+    [signOut],
+  );
 
   useEffect(() => {
     // O estado inicial já é "loading"; os setState ocorrem só depois da leitura assíncrona.
     void client.getAccessToken().then(resolveSession, sessionUnavailable);
     return client.onSessionChange((token) => {
-      // Sessão expirada ou encerrada em outra aba: volta ao login sem dados em memória.
+      // Renovação recusada (sessão revogada ou expirada): volta ao login sem dados em memória.
       if (token === null && stateRef.current.status === 'signedIn') {
         queryClient.clear();
         setState({ status: 'signedOut', notice: SESSION_EXPIRED });
@@ -102,27 +120,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, [client, resolveSession, sessionUnavailable, queryClient]);
 
-  /** Executa a chamada com o token atual e trata 401, conta desativada e troca de senha. */
+  /**
+   * Executa a chamada com o token atual e trata 401, conta desativada e troca de senha. Um 401
+   * (token recusado pelo servidor antes de processar a requisição) leva a uma renovação pelo E45 e
+   * a uma única nova tentativa; se a renovação também for recusada, a sessão termina.
+   */
   const withSession = useCallback(
     async <R,>(call: (token: string) => Promise<R>): Promise<R> => {
-      const token = await client.getAccessToken();
-      if (token === null) {
+      const tokenOrNull = async (get: () => Promise<string | null>) => {
+        try {
+          return await get();
+        } catch (error) {
+          if (error instanceof ApiError && error.code === 'ACCOUNT_DISABLED') {
+            await signOut(ACCOUNT_DISABLED);
+          }
+          throw error;
+        }
+      };
+      const expired = async (): Promise<never> => {
         await signOut(SESSION_EXPIRED);
         throw new ApiError(401, 'UNAUTHENTICATED', SESSION_EXPIRED);
-      }
-      try {
-        return await call(token);
-      } catch (error) {
-        if (error instanceof ApiError) {
-          if (error.status === 401) await signOut(SESSION_EXPIRED);
-          else if (error.code === 'ACCOUNT_DISABLED') await signOut(ACCOUNT_DISABLED);
+      };
+
+      let token = await tokenOrNull(() => client.getAccessToken());
+      if (token === null) return expired();
+      for (let attempt = 0; ; attempt += 1) {
+        try {
+          return await call(token);
+        } catch (error) {
+          if (!(error instanceof ApiError)) throw error;
+          if (error.status === 401) {
+            if (attempt > 0) return expired();
+            const stale = token;
+            token = await tokenOrNull(() => client.refreshAccessToken(stale));
+            if (token === null) return expired();
+            continue;
+          }
+          if (error.code === 'ACCOUNT_DISABLED') await signOut(ACCOUNT_DISABLED);
           else if (error.code === 'PASSWORD_CHANGE_REQUIRED') {
             const me = stateRef.current.status === 'signedIn' ? stateRef.current.me : null;
             if (me !== null)
               setState({ status: 'signedIn', me: { ...me, mustChangePassword: true } });
           }
+          throw error;
         }
-        throw error;
       }
     },
     [client, signOut],
@@ -167,15 +208,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (current.status !== 'signedIn')
         throw new ApiError(401, 'UNAUTHENTICATED', SESSION_EXPIRED);
       await request('/me/password', { method: 'POST', body: { newPassword } });
-      // A troca revoga os tokens de renovação no Supabase: entra de novo com a senha nova.
-      const again = await client.signIn(current.me.email, newPassword);
-      if (!again.ok) {
-        await signOut('Senha alterada. Entre novamente com a nova senha.');
-        return;
-      }
-      setState({ status: 'signedIn', me: await fetchMe(again.accessToken) });
+      // O E05 encerra as OUTRAS sessões e mantém a atual: basta recarregar o perfil (E04).
+      const { data: me } = await request<Me>('/me');
+      setState({ status: 'signedIn', me });
     },
-    [client, request, signOut],
+    [request],
   );
 
   const reload = useCallback(async () => {

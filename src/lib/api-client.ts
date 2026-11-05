@@ -88,7 +88,7 @@ export interface ApiEnvelope<T, M = undefined> {
 
 export interface ApiRequestInit {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
-  /** Access token do Supabase Auth (rotas administrativas). */
+  /** Token de acesso da sessão (E44/E45), nas rotas administrativas. */
   token?: string | undefined;
   /** JSON (serializado aqui) ou FormData (envio de arquivo, multipart). */
   body?: unknown;

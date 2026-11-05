@@ -1,6 +1,6 @@
 /**
  * Fluxos administrativos das ET04 e ET05 ponta a ponta, integrados à pesquisa pública (ET06), com
- * Supabase Auth local, backend e frontend reais: o SA cadastra uma equipe (TL05), importa a escala
+ * Autenticação da API, backend e frontend reais: o SA cadastra uma equipe (TL05), importa a escala
  * por CSV com turno noturno (TL07, F08), confere a escala (TL06), cria e publica uma pesquisa (TL08,
  * F06), decodifica o QR Code com jsqr (T02) e responde pela URL decodificada (TL09, TL11).
  * Executado somente no projeto de computador (grava dados no banco de teste).

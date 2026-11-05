@@ -24,7 +24,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomePage /> },
       {
-        // ET06: pesquisa pública (TL09, TL11), em pedaço próprio e sem o cliente do Supabase.
+        // ET06: pesquisa pública (TL09, TL11), em pedaço próprio e sem o cliente de autenticação.
         path: 'p/:slug',
         lazy: async () => ({
           Component: (await import('../features/public-survey/PublicSurveyPage')).PublicSurveyPage,

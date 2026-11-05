@@ -1,6 +1,6 @@
 /**
- * T12 — Autenticação administrativa, ponta a ponta (RF01, RF02, RF05), com Supabase Auth local,
- * backend e frontend reais. Contas fictícias criadas para a execução (global-setup) no banco de
+ * T12 — Autenticação administrativa, ponta a ponta (RF01, RF02, RF05), com a autenticação da API
+ * (E44–E46), backend e frontend reais. Contas fictícias criadas para a execução (global-setup) no banco de
  * teste; nenhum dado de desenvolvimento é usado.
  */
 import { expect, test } from '@playwright/test';
@@ -43,12 +43,14 @@ test('SA entra; Sair revoga a sessão, limpa o armazenamento e Voltar não mostr
   await login(page, accounts.sa.email, accounts.sa.password);
   await expect(page).toHaveURL(/\/admin\/usuarios$/);
   await expect(page.getByText(accounts.vi.email)).toBeVisible();
-  const token = await page.evaluate(() => {
+  const { token, refreshToken } = await page.evaluate(() => {
     const key = Object.keys(sessionStorage).find((item) => item.startsWith('fhdod-admin-auth'));
     const raw = key === undefined ? null : sessionStorage.getItem(key);
-    return (JSON.parse(raw ?? '{}') as { access_token?: string }).access_token ?? '';
+    const session = JSON.parse(raw ?? '{}') as { accessToken?: string; refreshToken?: string };
+    return { token: session.accessToken ?? '', refreshToken: session.refreshToken ?? '' };
   });
   expect(token).not.toBe('');
+  expect(refreshToken).not.toBe('');
   // Uma segunda tela administrativa no histórico, para testar o Voltar depois de sair.
   await page.goto('/admin/auditoria');
   await expect(page.getByRole('heading', { name: 'Auditoria' })).toBeVisible();
@@ -59,17 +61,22 @@ test('SA entra; Sair revoga a sessão, limpa o armazenamento e Voltar não mostr
   );
   expect(stored).toEqual([]);
 
-  // O access token anterior foi revogado pelo signOut: a API recusa (401).
-  const status = await page.evaluate(
-    async ({ accessToken, apiUrl }) => {
-      const response = await fetch(`${apiUrl}/api/v1/me`, {
+  // A sessão foi revogada pelo logout (E46): o token de acesso e o de renovação são recusados (401).
+  const statuses = await page.evaluate(
+    async ({ accessToken, refresh, apiUrl }) => {
+      const me = await fetch(`${apiUrl}/api/v1/me`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      return response.status;
+      const renewed = await fetch(`${apiUrl}/api/v1/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: refresh }),
+      });
+      return [me.status, renewed.status];
     },
-    { accessToken: token, apiUrl: API_URL },
+    { accessToken: token, refresh: refreshToken, apiUrl: API_URL },
   );
-  expect(status).toBe(401);
+  expect(statuses).toEqual([401, 401]);
 
   await page.goBack();
   await expect(page).toHaveURL(/\/login$/);
@@ -94,9 +101,9 @@ test('VI vai para o painel; menu sem Usuários/Auditoria; acesso direto negado n
   const status = await page.evaluate(async (apiUrl) => {
     const key = Object.keys(sessionStorage).find((item) => item.startsWith('fhdod-admin-auth'));
     const raw = key === undefined ? null : sessionStorage.getItem(key);
-    const session = JSON.parse(raw ?? '{}') as { access_token?: string };
+    const session = JSON.parse(raw ?? '{}') as { accessToken?: string };
     const response = await fetch(`${apiUrl}/api/v1/admin/audit-logs`, {
-      headers: { Authorization: `Bearer ${session.access_token ?? ''}` },
+      headers: { Authorization: `Bearer ${session.accessToken ?? ''}` },
     });
     return response.status;
   }, API_URL);
