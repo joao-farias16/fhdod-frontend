@@ -1,0 +1,34 @@
+# Dependências
+node_modules/
+
+# Builds e arquivos gerados
+dist/
+*.tsbuildinfo
+.vite/
+vite.config.*.timestamp-*
+.eslintcache
+
+# Testes, cobertura e Playwright (E2E)
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Variáveis de ambiente: somente .env.example (valores públicos e fictícios) é versionado
+.env
+.env.*
+!.env.example
+
+# Logs e arquivos temporários
+*.log
+npm-debug.log*
+*.tmp
+
+# Sistema operacional e editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
