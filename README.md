@@ -1,8 +1,11 @@
 # FHDOD — Interface web (frontend)
 
-Interface web do **FHDOD — Sistema de Gestão da Experiência do Paciente** (Fundação Hospitalar Dr. Oswaldo Diesel): pesquisa pública por QR Code ou link, manifestação, área administrativa (usuários, auditoria, setores, escalas, pesquisas), Ouvidoria, painéis com NPS e relatórios Excel.
+Interface web do **FHDOD — Sistema de Gestão da Experiência do Paciente** (Fundação Hospitalar Dr. Oswaldo Diesel): pesquisa pública por QR Code ou link, manifestação, área administrativa (usuários, auditoria, setores, escalas, pesquisas), Ouvidoria, painéis com NPS e relatórios Excel. A **TV Wall ainda não existe no frontend** (veja [Situação das funcionalidades](#situação-das-funcionalidades)).
 
-Este é um **projeto independente**. Ele tem as próprias dependências, lockfile, configurações (TypeScript, Vite, Vitest, ESLint, Prettier, Playwright) e variáveis de ambiente, e **não usa nenhum arquivo fora desta pasta**: pode ser copiado para outro repositório e continuar funcionando. A comunicação com a API REST do FHDOD acontece **somente por HTTP** (endpoints `/api/v1`), no endereço configurado em `VITE_API_URL`.
+- **Aplicação publicada:** <https://fhdod-frontend.vercel.app> (Vercel)
+- **API usada pela publicação:** `https://fhdod-experiencia-paciente.onrender.com` (endereço público, incluído no build por `VITE_API_URL`)
+
+Este é um **repositório independente**, separado do repositório da API. Ele tem as próprias dependências, lockfile, configurações (TypeScript, Vite, Vitest, ESLint, Prettier, Playwright) e variáveis de ambiente. A comunicação com a API REST do FHDOD acontece **somente por HTTP** (endpoints `/api/v1`), no endereço configurado em `VITE_API_URL`; o frontend não importa código da API.
 
 > **Ambiente acadêmico.** Projeto integrado do curso Técnico em Informática da ETE Monteiro Lobato – CIMOL. Usa somente dados fictícios.
 
@@ -23,14 +26,27 @@ Este é um **projeto independente**. Ele tem as próprias dependências, lockfil
 ## Estrutura
 
 ```text
-frontend/
+fhdod-frontend/                  raiz do repositório
 ├── src/
-│   ├── main.tsx                 ponto de entrada
-│   ├── app/                     provedores, rotas, layouts (público e administrativo) e página 404
-│   ├── components/ui/           componentes reutilizáveis (botão, campos, diálogos, estados, etiqueta)
+│   ├── main.tsx                 ponto de entrada (React Router + TanStack Query)
+│   ├── app/                     rotas (routes.tsx), layouts público e administrativo, AdminArea
+│   │                            (telas administrativas e proteção por permissão), 404, query-client
+│   ├── components/ui/           componentes reutilizáveis (botão, campos, diálogos, alerta,
+│   │                            estados de carregamento/erro/vazio, etiqueta)
 │   ├── features/<domínio>/      páginas, componentes da área e <domínio>-api.ts (tipos e hooks)
+│   │   ├── auth/                login, sessão (AuthProvider, auth-client), guardas de rota, troca de senha
+│   │   ├── home/                página inicial e situação da API
+│   │   ├── public-survey/       pesquisa pública e manifestação do paciente
+│   │   ├── dashboard/           painel geral e painel por setor
+│   │   ├── manifestations/      Ouvidoria (lista, detalhe, tratamento, contato)
+│   │   ├── reports/             exportação de relatórios Excel
+│   │   ├── surveys/             cadastro e edição de pesquisas, QR Code e cartaz
+│   │   ├── sectors/             setores e equipes
+│   │   ├── shifts/              escala/turnos e importação de escalas
+│   │   ├── users/               usuários
+│   │   └── audit/               auditoria
 │   ├── lib/                     env (variáveis VITE_*), api-client (cliente HTTP único),
-│   │                            formatação pt-BR e erros de formulário
+│   │                            formatação pt-BR, erros de formulário e estado de navegação
 │   ├── styles/                  Tailwind e tokens visuais
 │   └── test/                    setup do Vitest e helpers dos testes de componentes
 ├── e2e/                         testes ponta a ponta (Playwright) e environment.ts (portas e pastas)
@@ -39,6 +55,7 @@ frontend/
 ├── package.json · package-lock.json
 ├── tsconfig.json · tsconfig.base.json · tsconfig.app.json · tsconfig.node.json
 ├── vite.config.ts               Vite, proxy opcional de desenvolvimento e Vitest
+├── vercel.json                  fallback de SPA na Vercel (todas as rotas → index.html)
 ├── playwright.config.ts · eslint.config.js · .prettierrc.json · .editorconfig · .nvmrc
 ├── .env.example · .gitignore
 └── README.md
@@ -46,11 +63,70 @@ frontend/
 
 `dist/`, `coverage/`, `playwright-report/`, `test-results/` e `playwright/.cache/` são gerados e não versionados.
 
+## Arquitetura
+
+- **SPA** em React 19, sem renderização no servidor. `src/app/routes.tsx` define as rotas com React Router (modo de dados).
+- **Divisão do código:** a pesquisa pública (`/p/:slug`) e a área administrativa são carregadas sob demanda em pedaços separados. O cliente de autenticação e a sessão existem **somente** na área administrativa (`AdminRoot` em `src/app/AdminArea.tsx`); a pesquisa pública não carrega nada da sessão.
+- **Dados do servidor:** TanStack Query (cache, novas tentativas, atualização periódica). Cada domínio tem um `<domínio>-api.ts` com tipos e hooks.
+- **HTTP:** todas as chamadas passam por `src/lib/api-client.ts` (`apiRequest`, `apiGet`, `apiDownload`). As rotas administrativas usam o `request` do `AuthProvider`, que injeta o token e renova a sessão quando preciso.
+- **Erros:** respostas fora do sucesso viram `ApiError` com `status`, `code`, `message`, `requestId` e `details` (formato `{ error: { code, message, details, requestId } }` da API). Falha de rede vira `NETWORK_ERROR`; corpo inesperado vira `UNEXPECTED_RESPONSE`. `src/lib/errors.ts` leva os erros de validação (400 com `details`) e de conflito (409) aos campos do formulário e mostra o `requestId` nos avisos gerais.
+- **Permissões:** o menu e as telas são filtrados pelas permissões devolvidas em `GET /api/v1/me` (`RequirePermission`); o controle de acesso real é sempre do backend.
+- **Formulários:** React Hook Form. **Estilo:** Tailwind CSS 4. **Ícones:** Lucide. **QR Code:** qrcode.react.
+
+## Páginas e rotas
+
+| Rota                                | Tela                                                  | Acesso                           |
+| ----------------------------------- | ----------------------------------------------------- | -------------------------------- |
+| `/`                                 | página inicial com a situação da API (`GET /health`)  | público                          |
+| `/p/:slug` (`?origem=qr` ou `link`) | pesquisa pública de satisfação e manifestação         | público, sem login e sem cookies |
+| `/login`                            | login administrativo                                  | público                          |
+| `/trocar-senha`                     | troca de senha (obrigatória no primeiro acesso)       | sessão                           |
+| `/painel`                           | dashboard geral                                       | `dashboard:read`                 |
+| `/painel/setores/:sectorId`         | dashboard por setor                                   | `dashboard:read`                 |
+| `/ouvidoria/manifestacoes`          | lista de manifestações                                | `manifestations:read`            |
+| `/ouvidoria/manifestacoes/:id`      | detalhe e tratamento da manifestação                  | `manifestations:read`            |
+| `/relatorios`                       | exportação de relatórios Excel                        | alguma permissão `reports:*`     |
+| `/admin/usuarios`                   | usuários                                              | `users:read`                     |
+| `/admin/auditoria`                  | auditoria                                             | `audit_logs:read`                |
+| `/admin/setores`                    | setores e equipes                                     | `teams:create`                   |
+| `/admin/turnos`                     | escala e turnos                                       | `shifts:read`                    |
+| `/admin/escalas/importar`           | importação de escalas (CSV)                           | `rosters:import`                 |
+| `/admin/pesquisas`                  | lista de pesquisas                                    | `surveys:read`                   |
+| `/admin/pesquisas/:id`              | edição de pesquisa (dados, perguntas, publicação, QR) | `surveys:update`                 |
+| `/admin/pesquisas/:id/cartaz`       | cartaz A4 com QR Code, sem o layout administrativo    | `surveys:read`                   |
+| qualquer outra                      | página 404                                            | público                          |
+
+Depois do login, o Superadministrador vai para `/admin/usuarios`; os demais perfis vão para `/painel`. Perfis: Superadministrador, Administrador de setor, Gestão, Ouvidoria e Visualizador (`src/features/auth/auth-types.ts`).
+
+**Não há rota de TV Wall.** Qualquer caminho como `/tv` cai na página 404.
+
+## Situação das funcionalidades
+
+Levantamento feito pelo código, pelos testes automatizados e por acesso à aplicação publicada (novembro de 2026). "Implementada" significa que a tela chama os endpoints reais da API e tem testes de componentes e/ou E2E; as rotas administrativas da publicação não foram exercitadas com login.
+
+| Funcionalidade                 | Situação                        | O que existe                                                                                                                                                                                                                                                                                     |
+| ------------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Pesquisa pública de satisfação | Implementada                    | `GET /public/surveys/:slug`, nota 0–10 e perguntas por etapa (1–5), envio com `Idempotency-Key` (`POST /public/responses`), progresso no `sessionStorage`, aviso de inatividade (3 min + 60 s) que apaga as respostas, retorno ao início 30 s após a confirmação, mensagens para 404, 410 e 429. |
+| Manifestação pelo paciente     | Implementada                    | formulário após a avaliação (`POST /public/manifestations`): tipo, descrição, anonimato por padrão, contato opcional com aceite, protocolo na confirmação.                                                                                                                                       |
+| Autenticação                   | Implementada                    | login, renovação, logout, troca de senha e troca obrigatória pela API (veja [Autenticação](#autenticação)).                                                                                                                                                                                      |
+| Dashboard geral                | Implementado                    | `/dashboard/summary`, `/sectors`, `/trends`: filtros na URL, cartões com n, distribuição 0–10, setores, tendência, comparação com o período anterior, atualização a cada 60 s com a aba visível, botões de exportação.                                                                           |
+| Dashboard por setor            | Implementado                    | `/dashboard/questions`, `/shifts`, `/teams`: perguntas por etapa da jornada, turnos, equipes e cobertura.                                                                                                                                                                                        |
+| Ouvidoria                      | Implementada                    | lista com filtros e paginação; detalhe com status, prioridade, providências, notas, linha do tempo; visualização de contato por ação explícita (auditada pela API) e eliminação do contato com motivo.                                                                                           |
+| Relatórios                     | Implementados                   | `GET /reports/export`: respostas, indicadores e manifestações em Excel (.xlsx), tipo conforme a permissão do perfil; limites informados pela API.                                                                                                                                                |
+| Usuários                       | Implementado                    | lista, cadastro, edição, desativação e redefinição de senha com senha temporária.                                                                                                                                                                                                                |
+| Auditoria                      | Implementada                    | `GET /admin/audit-logs` com filtros (até 366 dias) e paginação.                                                                                                                                                                                                                                  |
+| Setores e equipes              | Implementados                   | cadastro e edição de setores (Superadministrador) e de equipes (também o Administrador de setor, no próprio escopo).                                                                                                                                                                             |
+| Escalas e turnos               | Implementados                   | escala por dia (intervalo de até 62 dias), cadastro e edição de turnos; importação de CSV com modelo para baixar, pré-validação (erros por linha, sem gravar) e confirmação.                                                                                                                     |
+| Pesquisas, QR Code e cartaz    | Implementados                   | criação, edição de dados e perguntas (por etapa da jornada), publicação de versão, link e QR Code (PNG e SVG) e cartaz A4 para impressão.                                                                                                                                                        |
+| Página inicial                 | Parcial                         | mostra a situação da API, mas o texto "Estado do desenvolvimento" ainda diz que pesquisa, painel, Ouvidoria, relatórios e TV Wall "serão disponibilizados nas próximas etapas", o que está desatualizado (exceto para a TV Wall). Não há link para o login.                                      |
+| **TV Wall**                    | **Pendente — não implementada** | não existe rota, página nem componente. Só aparece em um comentário de `AdminArea.tsx` e no texto da página inicial.                                                                                                                                                                             |
+
 ## Instalação
 
 ```bash
-cd frontend          # ou a raiz do repositório próprio do frontend, depois da extração
-npm ci               # instala somente as dependências do frontend (package-lock.json desta pasta)
+git clone <url-deste-repositório> fhdod-frontend
+cd fhdod-frontend
+npm ci               # instala as dependências (package-lock.json)
 cp .env.example .env
 ```
 
@@ -97,29 +173,35 @@ A página inicial mostra "API disponível" quando a comunicação com a API est�
 
 ## Testes e qualidade
 
-| Comando                 | O que faz                                                                                  |
-| ----------------------- | ------------------------------------------------------------------------------------------ |
-| `npm run check`         | formatação, lint, typecheck, testes e build, em sequência (igual ao job do frontend na CI) |
-| `npm run typecheck`     | TypeScript (`tsc -b`: aplicação, configurações e E2E)                                      |
-| `npm run lint`          | ESLint sem avisos tolerados; `npm run lint:fix` corrige                                    |
-| `npm run format:check`  | Prettier; `npm run format` corrige                                                         |
-| `npm test`              | testes de componentes e unidade (Vitest + jsdom); não precisam da API nem do `.env`        |
-| `npm run test:coverage` | cobertura                                                                                  |
-| `npm run test:e2e`      | ponta a ponta com Playwright, Chrome instalado e API local (veja abaixo)                   |
+| Comando                 | O que faz                                                                           |
+| ----------------------- | ----------------------------------------------------------------------------------- |
+| `npm run check`         | formatação, lint, typecheck, testes e build, em sequência                           |
+| `npm run typecheck`     | TypeScript (`tsc -b`: aplicação, configurações e E2E)                               |
+| `npm run lint`          | ESLint sem avisos tolerados; `npm run lint:fix` corrige                             |
+| `npm run format:check`  | Prettier; `npm run format` corrige                                                  |
+| `npm test`              | testes de componentes e unidade (Vitest + jsdom); não precisam da API nem do `.env` |
+| `npm run test:coverage` | cobertura                                                                           |
+| `npm run test:e2e`      | ponta a ponta com Playwright, Chrome instalado e API local (veja abaixo)            |
 
 Se o Vitest acusar `Timeout waiting for worker to respond` em máquina sobrecarregada, use `npx vitest run --maxWorkers=2`.
 
+Situação verificada em 05/11/2026: `npx vitest run --maxWorkers=2` → **18 arquivos, 119 testes, todos aprovados**. Os testes de componentes e unidade cobrem o cliente HTTP, as variáveis de ambiente, a formatação, a autenticação (cliente, fluxo e troca de senha), os componentes de interface, a pesquisa pública e a manifestação, o dashboard, a Ouvidoria, setores, escalas, pesquisas, usuários e auditoria. A E2E não foi executada nesta verificação (exige a API e o MySQL locais).
+
+Este repositório **não tem CI configurada** (não há `.github/workflows`). Rode `npm run check` antes de publicar.
+
 ### Testes ponta a ponta (E2E)
 
-A E2E sobe a API com o comando `npm run dev:no-watch` dela (porta 3334, banco de **teste**) e o frontend (porta 5174, com `VITE_API_URL=http://localhost:3334`, passando pelo CORS) e cria/exclui contas fictícias por meio do comando `npm run e2e:fixture` da API. O frontend não importa código da API: só executa os comandos publicados por ela.
+A E2E sobe a API com o comando `npm run dev:no-watch` dela (porta 3334, banco de **teste**) e o frontend (porta 5174, com `VITE_API_URL=http://localhost:3334`, passando pelo CORS) e cria/exclui contas fictícias por meio do comando `npm run e2e:fixture` da API. O frontend não importa código da API: só executa os comandos publicados por ela. Usa o Chrome instalado (`channel: 'chrome'`) em dois tamanhos: computador (1440 px) e celular (360 px; somente os fluxos que não gravam dados administrativos).
 
-1. No projeto da API: banco local preparado e `.env` com as variáveis do banco de **teste** (`TEST_DB_*`) e `JWT_SECRET`, conforme o README da API. A configuração da E2E passa à API o banco de teste (`DB_*` a partir de `TEST_DB_*`), o mesmo usado pelo `npm run e2e:fixture`.
-2. Aqui: `npm run test:e2e`.
+1. Tenha um clone do repositório da API, com banco local preparado e `.env` com as variáveis do banco de **teste** (`TEST_DB_*`) e `JWT_SECRET`, conforme o README da API. A configuração da E2E passa à API o banco de teste (`DB_*` a partir de `TEST_DB_*`), o mesmo usado pelo `npm run e2e:fixture`.
+2. Aqui: defina `FHDOD_API_DIR` com o caminho desse clone e rode `npm run test:e2e`.
 
-| Variável           | Padrão                    | Uso                                                                                                                                |
-| ------------------ | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `FHDOD_API_DIR`    | `..` (pasta acima)        | pasta do projeto da API, relativa a esta pasta ou absoluta. Depois da extração para outro repositório, aponte para o clone da API. |
-| `E2E_EVIDENCE_DIR` | `test-results/evidencias` | onde salvar as capturas de tela (dados fictícios). Para atualizar as evidências versionadas da API: `../docs/evidencias`.          |
+| Variável           | Padrão                    | Uso                                                                                                                                                                                                                                      |
+| ------------------ | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FHDOD_API_DIR`    | `..` (pasta acima)        | pasta do projeto da API, relativa à raiz deste repositório ou absoluta. O padrão vem da época em que o frontend ficava dentro do repositório da API; agora que o repositório é separado, **defina esta variável** (ex.: `../fhdod-api`). |
+| `E2E_EVIDENCE_DIR` | `test-results/evidencias` | onde salvar as capturas de tela (dados fictícios). Para atualizar as evidências versionadas no repositório da API, aponte para a pasta `docs/evidencias` do clone da API.                                                                |
+
+Cenários cobertos (`e2e/`): autenticação (credenciais inválidas, redirecionamento sem sessão, logout com limpeza, perfil Visualizador sem acesso a Usuários/Auditoria); pesquisa pública (abertura sem login nem cookies, 404/410, layouts de 360 a 1440 px, recarga mantém respostas, conclusão e inatividade apagam os dados); manifestação anônima com protocolo e contato com aceite; Ouvidoria (status, nota, contato auditado e eliminação); painel atualizando com nova resposta e exportação .xlsx; administração (cadastro, troca obrigatória, desativação, redefinição e auditoria); equipe, importação de escala, pesquisa publicada e QR Code decodificado.
 
 ## Build de produção
 
@@ -128,11 +210,29 @@ VITE_APP_ENV=production VITE_API_URL=https://api.exemplo npm run build   # gera 
 npm run preview                                                           # serve o build em http://localhost:4173
 ```
 
-O conteúdo de `dist/` é estático e pode ser publicado em qualquer hospedagem de sites estáticos. As variáveis `VITE_*` são fixadas no momento do build. Rotas como `/admin/...` e `/p/<slug>` exigem que a hospedagem devolva `index.html` para caminhos desconhecidos (fallback de SPA).
+O build (`tsc -b && vite build`) gera arquivos estáticos em `dist/`. As variáveis `VITE_*` são fixadas no momento do build. Com `VITE_APP_ENV=production`, `VITE_API_URL` precisa usar `https://`: a validação de `src/lib/env.ts` roda quando a aplicação carrega no navegador (não durante o build) e interrompe o carregamento com erro se a regra não for cumprida. Rotas como `/admin/...` e `/p/<slug>` exigem que a hospedagem devolva `index.html` para caminhos desconhecidos (fallback de SPA).
 
-## Extração para outro repositório
+## Publicação na Vercel
 
-1. Copie o conteúdo desta pasta para a raiz do novo repositório.
-2. `npm ci`, `cp .env.example .env` e ajuste `VITE_API_URL`.
-3. Para a E2E, defina `FHDOD_API_DIR` com o caminho do clone da API.
-4. Copie o job `frontend` de `.github/workflows/ci.yml` da API, retirando `working-directory: frontend` e `cache-dependency-path`.
+A aplicação está publicada em <https://fhdod-frontend.vercel.app>.
+
+- **Build:** `npm run build`, saída `dist/` (padrão do Vite). As configurações do projeto no painel da Vercel não estão versionadas e não foram conferidas; o repositório só define `vercel.json`.
+- **Fallback de SPA:** `vercel.json` reescreve qualquer caminho para `/index.html`, para que rotas como `/login`, `/painel` e `/p/<slug>` funcionem ao abrir o link diretamente ou recarregar a página (commit `7c56ca6`). Verificado: `/`, `/login`, `/painel` e `/p/<slug>` respondem 200 na publicação.
+- **Variáveis de ambiente (painel da Vercel):** `VITE_API_URL` com o endereço HTTPS da API, sem `/api/v1` (o build publicado usa `https://fhdod-experiencia-paciente.onrender.com`), e `VITE_APP_ENV=production`. São valores públicos; nenhum segredo é necessário no frontend. Como são fixadas no build, alterar uma variável exige uma nova implantação.
+  - **Atenção:** o build publicado verificado em 05/11/2026 contém `VITE_APP_ENV=development` (a variável não está definida como `production` na Vercel ou foi definida com outro valor). A aplicação funciona, mas a exigência de HTTPS para `VITE_API_URL` não é aplicada. Recomenda-se definir `VITE_APP_ENV=production` no ambiente de produção da Vercel e reimplantar.
+- **Na API:** o endereço `https://fhdod-frontend.vercel.app` precisa estar em `CORS_ORIGIN` (verificado: a API responde com `Access-Control-Allow-Origin` para essa origem) e em `PUBLIC_APP_URL` (links e QR Code das pesquisas).
+- A API publicada pode demorar na primeira requisição depois de um período parado (foi observada uma partida a frio durante a verificação); a página inicial mostra a situação da API e a pesquisa pública tem o botão "Tentar novamente".
+
+## Histórico relevante
+
+- `c293d71` — o frontend passou a ser um projeto independente (antes era a pasta `frontend/` do repositório da API).
+- `1587f99` — o **Supabase Auth foi substituído** pela autenticação da própria API (`/auth/login`, `/auth/refresh`, `/auth/logout`); o pacote `@supabase/supabase-js`, `src/lib/supabase.ts` e as variáveis `VITE_SUPABASE_*` foram removidos.
+- `7c56ca6` — `vercel.json` com o fallback de rotas da SPA.
+
+## Limitações e pendências
+
+- **TV Wall:** não implementada no frontend (sem rota, página ou componente).
+- **Página inicial:** o texto "Estado do desenvolvimento" está desatualizado e não há link para `/login` (o acesso administrativo é feito digitando `/login`).
+- **Publicação com `VITE_APP_ENV=development`** (veja [Publicação na Vercel](#publicação-na-vercel)).
+- **Sem CI** neste repositório.
+- **E2E** depende de um clone local da API, do MySQL e do Chrome instalado; não roda contra a publicação.
