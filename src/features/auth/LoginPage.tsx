@@ -89,7 +89,7 @@ export function LoginPage() {
         <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-4 sm:px-6">
           <HeartPulse aria-hidden="true" className="size-7" />
           <span className="text-xl font-bold tracking-tight">FHDOD</span>
-          <span className="hidden text-sm text-blue-100 sm:inline">Área administrativa</span>
+          <span className="hidden text-sm text-brand-100 sm:inline">Área administrativa</span>
         </div>
       </header>
 

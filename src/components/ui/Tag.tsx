@@ -4,7 +4,7 @@ export type TagTone = 'success' | 'info' | 'neutral';
 
 const TONES: Record<TagTone, string> = {
   success: 'border-green-700 text-green-800',
-  info: 'border-brand-700 text-brand-800',
+  info: 'border-info-700 text-info-800',
   neutral: 'border-slate-500 text-slate-700',
 };
 

@@ -97,7 +97,7 @@ export function AdminLayout() {
           <div className="flex w-full flex-wrap items-center gap-2 md:ml-auto md:w-auto">
             <p className="mr-2 text-sm leading-tight">
               <span className="block font-semibold">{me.fullName}</span>
-              <span className="text-blue-100">{ROLE_LABELS[me.role]}</span>
+              <span className="text-brand-100">{ROLE_LABELS[me.role]}</span>
             </p>
             {me.mustChangePassword ? null : (
               <Link

@@ -45,6 +45,16 @@ export default tseslint.config(
     languageOptions: { globals: globals.node },
   },
   {
+    // Plugin do Figma Desktop (figma-plugin/): JavaScript sem build, verificado por tipos com
+    // `npm run typecheck` na própria pasta. `figma` e `__html__` são globais do sandbox do Figma.
+    files: ['figma-plugin/**/*.js'],
+    ...tseslint.configs.disableTypeChecked,
+    languageOptions: {
+      parserOptions: { projectService: false, project: false },
+      globals: { ...globals.browser, ...globals.node, figma: 'readonly', __html__: 'readonly' },
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
     languageOptions: { globals: globals.browser },
     plugins: {

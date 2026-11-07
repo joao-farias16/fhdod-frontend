@@ -252,7 +252,7 @@ export function TrendChart({
               key={d}
               d={d}
               fill="none"
-              stroke="#1d4ed8"
+              stroke="#c8102e"
               strokeWidth={2}
               strokeLinejoin="round"
             />
@@ -264,7 +264,7 @@ export function TrendChart({
                 cx={x(index)}
                 cy={y(point.nps)}
                 r={active === index ? 6 : 4}
-                fill="#1d4ed8"
+                fill="#c8102e"
                 stroke="#ffffff"
                 strokeWidth={2}
               />

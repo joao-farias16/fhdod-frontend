@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FHDOD — Identidade visual</title>
+    <style>
+      :root {
+        --marca: #c8102e;
+        --marca-escura: #a50d26;
+        --marca-clara: #fdf2f4;
+        --texto: #0f172a;
+        --apoio: #475569;
+        --borda: #e2e8f0;
+        --fundo: #ffffff;
+        --fundo-2: #f8fafc;
+        --erro: #991b1b;
+        --aviso: #92400e;
+        --info: #1d4ed8;
+        --ok: #15803d;
+      }
+      .figma-dark {
+        --texto: #f1f5f9;
+        --apoio: #cbd5e1;
+        --borda: #334155;
+        --fundo: #1e1e1e;
+        --fundo-2: #2a2a2a;
+        --marca-clara: #3b0a12;
+        --erro: #fca5a5;
+        --aviso: #fcd34d;
+        --info: #93c5fd;
+        --ok: #86efac;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font:
+          13px/1.45 Inter,
+          system-ui,
+          sans-serif;
+        color: var(--texto);
+        background: var(--fundo);
+      }
+      header {
+        background: var(--marca);
+        color: #fff;
+        padding: 12px 16px;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+      }
+      header p {
+        margin: 2px 0 0;
+        color: #fde4e7;
+        font-size: 12px;
+      }
+      main {
+        padding: 12px 16px 24px;
+      }
+      section {
+        margin-top: 14px;
+      }
+      h2 {
+        margin: 0 0 6px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .muted {
+        color: var(--apoio);
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      button {
+        font: inherit;
+        font-weight: 600;
+        min-height: 32px;
+        padding: 0 12px;
+        border-radius: 6px;
+        border: 1px solid transparent;
+        cursor: pointer;
+      }
+      button:focus-visible {
+        outline: 2px solid var(--marca);
+        outline-offset: 2px;
+      }
+      .primary {
+        background: var(--marca);
+        color: #fff;
+      }
+      .primary:hover {
+        background: var(--marca-escura);
+      }
+      .secondary {
+        background: var(--fundo);
+        color: var(--texto);
+        border-color: #6b7280;
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      fieldset {
+        border: 1px solid var(--borda);
+        border-radius: 8px;
+        margin: 0;
+        padding: 8px 10px;
+      }
+      legend {
+        font-weight: 600;
+        padding: 0 4px;
+      }
+      label {
+        display: flex;
+        gap: 6px;
+        align-items: flex-start;
+        padding: 2px 0;
+      }
+      .bar {
+        height: 8px;
+        background: var(--borda);
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      .bar > div {
+        height: 100%;
+        width: 0;
+        background: var(--marca);
+        transition: width 0.15s;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+      .card {
+        border: 1px solid var(--borda);
+        border-radius: 8px;
+        padding: 6px 8px;
+        background: var(--fundo-2);
+      }
+      .card strong {
+        display: block;
+        font-size: 18px;
+      }
+      .card span {
+        font-size: 11px;
+        color: var(--apoio);
+      }
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        max-height: 220px;
+        overflow: auto;
+        border: 1px solid var(--borda);
+        border-radius: 8px;
+      }
+      li {
+        padding: 6px 8px;
+        border-top: 1px solid var(--borda);
+      }
+      li:first-child {
+        border-top: 0;
+      }
+      li button {
+        all: unset;
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+      .tag {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 600;
+        border: 1px solid currentColor;
+        border-radius: 99px;
+        padding: 0 6px;
+        margin-left: 4px;
+      }
+      .erro {
+        color: var(--erro);
+      }
+      .aviso {
+        color: var(--aviso);
+      }
+      .revisar {
+        color: var(--info);
+      }
+      .ok {
+        color: var(--ok);
+      }
+      .hidden {
+        display: none;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+      td,
+      th {
+        text-align: left;
+        padding: 3px 4px;
+        border-top: 1px solid var(--borda);
+      }
+      .swatch {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        border: 1px solid var(--borda);
+        vertical-align: -1px;
+        margin-right: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>FHDOD — Identidade visual</h1>
+      <p>Sistema de Gestão da Experiência do Paciente · Fundação Hospitalar Dr. Oswaldo Diesel</p>
+    </header>
+    <main>
+      <p class="muted" id="arquivo">Carregando…</p>
+      <p class="muted">
+        Atualiza o arquivo de design para a identidade branco e vermelho do frontend e cria as telas
+        ausentes. Analise antes de atualizar. Cada etapa pode ser desfeita com Ctrl+Z.
+      </p>
+
+      <div class="row">
+        <button class="secondary" id="analisar">1. Analisar documento</button>
+        <button class="primary" id="atualizar" disabled>2. Executar atualização</button>
+        <button class="secondary hidden" id="cancelar">Cancelar</button>
+      </div>
+
+      <section>
+        <fieldset id="etapas">
+          <legend>Etapas da atualização</legend>
+          <label
+            ><input type="checkbox" name="variables" checked /> Variáveis "FHDOD — Cores" (marca
+            vermelha e criação de "informação/*")</label
+          >
+          <label
+            ><input type="checkbox" name="components" checked /> Componentes (Botão, Aviso,
+            Etiqueta… — ícones-mestre não são alterados)</label
+          >
+          <label
+            ><input type="checkbox" name="screens" checked /> Telas existentes (cores fixas
+            azuis)</label
+          >
+          <label
+            ><input type="checkbox" name="create" checked /> Criar telas ausentes (sem
+            duplicar)</label
+          >
+        </fieldset>
+      </section>
+
+      <section aria-live="polite">
+        <h2>Progresso</h2>
+        <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="barra">
+          <div></div>
+        </div>
+        <p class="muted" id="etapa">Aguardando.</p>
+      </section>
+
+      <section>
+        <h2>Resumo</h2>
+        <div class="cards">
+          <div class="card"><strong id="n-analisadas">–</strong><span>telas analisadas</span></div>
+          <div class="card">
+            <strong id="n-atualizadas">–</strong><span>telas atualizadas</span>
+          </div>
+          <div class="card"><strong id="n-criadas">–</strong><span>telas criadas</span></div>
+          <div class="card"><strong id="n-problemas">–</strong><span>problemas</span></div>
+        </div>
+        <p class="muted" id="detalhe"></p>
+      </section>
+
+      <section id="sec-variaveis" class="hidden">
+        <h2>Variáveis</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Variável</th>
+              <th>Atual</th>
+              <th>Nova</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="variaveis"></tbody>
+        </table>
+      </section>
+
+      <section id="sec-ausentes" class="hidden">
+        <h2>Telas do frontend ausentes no Figma</h2>
+        <ul id="ausentes"></ul>
+      </section>
+
+      <section id="sec-telas" class="hidden">
+        <h2>Telas e frames</h2>
+        <ul id="telas"></ul>
+      </section>
+
+      <section id="sec-problemas" class="hidden">
+        <h2>Possíveis problemas</h2>
+        <ul id="problemas"></ul>
+      </section>
+    </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const send = (message) => parent.postMessage({ pluginMessage: message }, '*');
+      let busy = false;
+
+      function setBusy(value) {
+        busy = value;
+        $('analisar').disabled = value;
+        $('atualizar').disabled = value || !$('atualizar').dataset.ready;
+        $('cancelar').classList.toggle('hidden', !value);
+      }
+
+      function el(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      }
+
+      function focusButton(id, label) {
+        const button = el('button', '', label);
+        button.addEventListener('click', () => send({ type: 'focus', id }));
+        return button;
+      }
+
+      function renderProblems(problems) {
+        const list = $('problemas');
+        list.replaceChildren();
+        $('sec-problemas').classList.toggle('hidden', problems.length === 0);
+        $('n-problemas').textContent = String(problems.filter((p) => p.level !== 'revisar').length);
+        for (const problem of problems) {
+          const item = el('li');
+          item.append(el('span', 'tag ' + problem.level, problem.level), ' ');
+          item.append(el('strong', '', problem.where + ': '), problem.message);
+          list.append(item);
+        }
+      }
+
+      function renderAnalysis(data) {
+        const screens = data.screens.filter((s) => !s.library);
+        $('n-analisadas').textContent = String(screens.length);
+        $('n-atualizadas').textContent = String(screens.filter((s) => s.marked).length);
+        $('n-criadas').textContent = String(screens.filter((s) => s.created).length);
+        const pending = data.screens.reduce((sum, s) => sum + s.pending, 0);
+        const bound = data.screens.reduce((sum, s) => sum + s.brandBound, 0);
+        $('detalhe').textContent =
+          pending +
+          ' pintura(s) a alterar diretamente; ' +
+          bound +
+          ' ligada(s) às variáveis "marca/*" (mudam com a etapa de variáveis); ' +
+          data.coverage.missing.length +
+          ' tela(s) ausente(s).';
+
+        const vars = $('variaveis');
+        vars.replaceChildren();
+        $('sec-variaveis').classList.toggle('hidden', data.variables.length === 0);
+        for (const v of data.variables) {
+          const row = el('tr');
+          const swatch = (hex) => {
+            const cell = el('td');
+            if (hex && /^[0-9a-f]{6}$/.test(hex)) {
+              const s = el('span', 'swatch');
+              s.style.background = '#' + hex;
+              cell.append(s, '#' + hex);
+            } else cell.textContent = hex || '—';
+            return cell;
+          };
+          row.append(el('td', '', v.name), swatch(v.current), swatch(v.target));
+          row.append(el('td', v.status === 'ok' ? 'ok' : 'aviso', v.status));
+          vars.append(row);
+        }
+
+        const missing = $('ausentes');
+        missing.replaceChildren();
+        $('sec-ausentes').classList.toggle('hidden', false);
+        if (data.coverage.missing.length === 0) {
+          missing.append(el('li', 'ok', 'Todas as telas do frontend estão representadas.'));
+        }
+        for (const m of data.coverage.missing) {
+          const item = el('li');
+          item.append(el('strong', '', m.label), ' — ', m.route);
+          item.append(
+            el(
+              'span',
+              'tag ' + (m.canCreate ? 'revisar' : 'erro'),
+              m.canCreate ? 'será criada' : 'criar manualmente',
+            ),
+          );
+          missing.append(item);
+        }
+
+        const list = $('telas');
+        list.replaceChildren();
+        $('sec-telas').classList.remove('hidden');
+        for (const s of data.screens) {
+          const item = el('li');
+          item.append(focusButton(s.id, s.name));
+          if (s.library) item.append(el('span', 'tag', 'biblioteca'));
+          if (s.marked) item.append(el('span', 'tag ok', 'atualizada'));
+          if (s.created) item.append(el('span', 'tag revisar', 'criada pelo plugin'));
+          item.append(
+            el(
+              'div',
+              'muted',
+              s.nodes +
+                ' camadas · ' +
+                s.pending +
+                ' a alterar · ' +
+                s.brandBound +
+                ' via variável · ' +
+                s.images +
+                ' imagem(ns) preservada(s)',
+            ),
+          );
+          list.append(item);
+        }
+        renderProblems(data.problems);
+        $('atualizar').dataset.ready = '1';
+      }
+
+      function renderResult(data) {
+        $('n-atualizadas').textContent = String(data.screensUpdated);
+        $('n-criadas').textContent = String(data.created.length);
+        $('detalhe').textContent =
+          'Variáveis: ' +
+          data.variablesCreated +
+          ' criada(s), ' +
+          data.variablesUpdated +
+          ' atualizada(s). Pinturas alteradas: ' +
+          data.paintsChanged +
+          ' (' +
+          data.infoRebinds +
+          ' religada(s) a "informação/*"). Telas criadas: ' +
+          (data.created.map((c) => c.name).join('; ') || 'nenhuma') +
+          '. Rode a análise de novo para conferir.';
+        renderProblems(data.problems);
+      }
+
+      $('analisar').addEventListener('click', () => {
+        setBusy(true);
+        send({ type: 'analyze' });
+      });
+      $('atualizar').addEventListener('click', () => {
+        const steps = {};
+        for (const input of document.querySelectorAll('#etapas input'))
+          steps[input.name] = input.checked;
+        setBusy(true);
+        send({ type: 'update', steps });
+      });
+      $('cancelar').addEventListener('click', () => send({ type: 'cancel' }));
+
+      window.onmessage = (event) => {
+        const message = event.data.pluginMessage;
+        if (!message) return;
+        if (message.type === 'ready') {
+          $('arquivo').textContent =
+            'Arquivo: ' +
+            message.file +
+            ' · ' +
+            message.pages +
+            ' página(s) · plugin v' +
+            message.version;
+        } else if (message.type === 'progress') {
+          const percent = message.total > 0 ? Math.round((message.done / message.total) * 100) : 0;
+          $('barra').firstElementChild.style.width = percent + '%';
+          $('barra').setAttribute('aria-valuenow', String(percent));
+          $('etapa').textContent = message.step + ' — ' + message.label + ' (' + percent + '%)';
+        } else if (message.type === 'analysis') {
+          setBusy(false);
+          renderAnalysis(message.data);
+        } else if (message.type === 'result') {
+          setBusy(false);
+          renderResult(message.data);
+        } else if (message.type === 'error') {
+          setBusy(false);
+          $('etapa').textContent = 'Erro: ' + message.message;
+          renderProblems(message.problems || []);
+        }
+      };
+    </script>
+  </body>
+</html>
