@@ -18,7 +18,7 @@ export function AppLayout() {
             <HeartPulse aria-hidden="true" className="size-7" />
             <span className="text-xl font-bold tracking-tight">FHDOD</span>
           </Link>
-          <span className="hidden text-sm text-blue-100 sm:inline">
+          <span className="hidden text-sm text-brand-100 sm:inline">
             Gestão da Experiência do Paciente
           </span>
         </div>

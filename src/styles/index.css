@@ -1,14 +1,31 @@
 @import 'tailwindcss';
 
-/* Tokens visuais (Tabela 22 da especificação). */
+/*
+ * Tokens visuais (Tabela 22 da especificação), com a identidade branco e vermelho da Fundação
+ * Hospitalar Dr. Oswaldo Diesel. Contraste (WCAG 2.1) calculado sobre branco: brand-700 5,88:1,
+ * brand-800 7,82:1, danger-700 8,31:1, info-700 6,70:1; brand-100 sobre brand-700: 4,88:1.
+ *
+ * - brand: identidade (cabeçalho, botão primário, links, elementos ativos e seleções).
+ * - danger: erros e ações destrutivas. É um vermelho-escuro distinto do vermelho da marca; o
+ *   significado nunca depende só da cor (ícone e texto, RNF08) e ações destrutivas sempre pedem
+ *   confirmação.
+ * - info: avisos informativos e etiquetas de situação neutras. Continua azul para não ser
+ *   confundido com erro dentro de uma identidade vermelha.
+ */
 @theme {
   --font-sans:
     Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif;
-  --color-brand-700: #1d4ed8;
-  --color-brand-800: #1e40af;
-  --color-brand-50: #eff6ff;
-  --color-danger-700: #b91c1c;
+  --color-brand-50: #fdf2f4;
+  --color-brand-100: #fde4e7;
+  --color-brand-700: #c8102e;
+  --color-brand-800: #a50d26;
+  --color-danger-700: #991b1b;
+  --color-danger-800: #7f1d1d;
+  --color-info-50: #eff6ff;
+  --color-info-700: #1d4ed8;
+  --color-info-800: #1e40af;
+  --color-info-950: #172554;
   --color-neutral-border: #6b7280;
 }
 
@@ -24,5 +41,10 @@
   /* RNF07: foco visível de 2 px em todos os elementos interativos. */
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-brand-700;
+  }
+
+  /* No cabeçalho vermelho, o contorno vermelho ficaria invisível: usa branco. */
+  header :focus-visible {
+    @apply outline-white;
   }
 }

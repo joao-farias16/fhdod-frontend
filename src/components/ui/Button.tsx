@@ -3,12 +3,13 @@ import type { ButtonHTMLAttributes } from 'react';
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
 
 const VARIANTS: Record<Variant, string> = {
-  // Tabela 22: primário #1D4ED8 com texto branco (6,70:1); secundário com borda #6B7280;
-  // perigo #B91C1C, sempre com confirmação.
+  // Tabela 22 (identidade FHDOD): primário vermelho #C8102E com texto branco (5,88:1); secundário
+  // com borda #6B7280;
+  // perigo vermelho-escuro #991B1B (8,31:1), sempre com confirmação.
   primary: 'bg-brand-700 text-white hover:bg-brand-800 disabled:bg-brand-700/60',
   secondary:
     'border border-neutral-border bg-white text-slate-900 hover:bg-slate-100 disabled:text-slate-500',
-  danger: 'bg-danger-700 text-white hover:bg-red-800 disabled:bg-danger-700/60',
+  danger: 'bg-danger-700 text-white hover:bg-danger-800 disabled:bg-danger-700/60',
   ghost: 'text-brand-700 hover:bg-brand-50 disabled:text-slate-500',
 };
 

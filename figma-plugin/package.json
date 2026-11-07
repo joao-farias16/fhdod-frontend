@@ -1,0 +1,17 @@
+{
+  "name": "fhdod-figma-plugin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plugin do Figma Desktop que atualiza o arquivo de design do FHDOD para a identidade branco e vermelho e cria as telas ausentes.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test test/plugin.test.js",
+    "check": "npm run typecheck && npm run test"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.0.0",
+    "typescript": "~5.9.3"
+  }
+}

@@ -4,6 +4,8 @@ Interface web do **FHDOD — Sistema de Gestão da Experiência do Paciente** (F
 
 - **Aplicação publicada:** <https://fhdod-frontend.vercel.app> (Vercel)
 - **API usada pela publicação:** `https://fhdod-experiencia-paciente.onrender.com` (endereço público, incluído no build por `VITE_API_URL`)
+- **Identidade visual:** branco e vermelho, da Fundação Hospitalar Dr. Oswaldo Diesel (veja [Identidade visual](#identidade-visual)).
+- **Design (Figma):** [sistema-hospital](https://www.figma.com/design/kcRMvRhHs8IYRfsZkv1BLZ/sistema-hospital), atualizado pelo plugin próprio em [`figma-plugin/`](figma-plugin/README.md).
 
 Este é um **repositório independente**, separado do repositório da API. Ele tem as próprias dependências, lockfile, configurações (TypeScript, Vite, Vitest, ESLint, Prettier, Playwright) e variáveis de ambiente. A comunicação com a API REST do FHDOD acontece **somente por HTTP** (endpoints `/api/v1`), no endereço configurado em `VITE_API_URL`; o frontend não importa código da API.
 
@@ -50,6 +52,9 @@ fhdod-frontend/                  raiz do repositório
 │   ├── styles/                  Tailwind e tokens visuais
 │   └── test/                    setup do Vitest e helpers dos testes de componentes
 ├── e2e/                         testes ponta a ponta (Playwright) e environment.ts (portas e pastas)
+├── figma-plugin/                plugin do Figma Desktop que atualiza o arquivo de design para a
+│                                identidade branco e vermelho e cria as telas ausentes (README próprio)
+├── docs/relatorios/             relatórios técnicos das etapas
 ├── public/                      arquivos estáticos
 ├── index.html
 ├── package.json · package-lock.json
@@ -72,6 +77,31 @@ fhdod-frontend/                  raiz do repositório
 - **Erros:** respostas fora do sucesso viram `ApiError` com `status`, `code`, `message`, `requestId` e `details` (formato `{ error: { code, message, details, requestId } }` da API). Falha de rede vira `NETWORK_ERROR`; corpo inesperado vira `UNEXPECTED_RESPONSE`. `src/lib/errors.ts` leva os erros de validação (400 com `details`) e de conflito (409) aos campos do formulário e mostra o `requestId` nos avisos gerais.
 - **Permissões:** o menu e as telas são filtrados pelas permissões devolvidas em `GET /api/v1/me` (`RequirePermission`); o controle de acesso real é sempre do backend.
 - **Formulários:** React Hook Form. **Estilo:** Tailwind CSS 4. **Ícones:** Lucide. **QR Code:** qrcode.react.
+
+## Identidade visual
+
+Branco e vermelho, seguindo a identidade da Fundação Hospitalar Dr. Oswaldo Diesel (antes: branco e azul). As cores ficam centralizadas como tokens do Tailwind em `src/styles/index.css` (`@theme`); os componentes usam as classes `*-brand-*`, `*-danger-*` e `*-info-*`, sem valores soltos.
+
+| Token          | Valor     | Uso                                                                          | Contraste (WCAG)       |
+| -------------- | --------- | ---------------------------------------------------------------------------- | ---------------------- |
+| `brand-700`    | `#c8102e` | cabeçalho, botão primário, links, seleção, barras e linha dos gráficos, foco | 5,88:1 sobre branco    |
+| `brand-800`    | `#a50d26` | hover, item ativo do menu (texto sobre branco)                               | 7,82:1 sobre branco    |
+| `brand-50`     | `#fdf2f4` | fundos de destaque (linha selecionada, oferta de manifestação)               | —                      |
+| `brand-100`    | `#fde4e7` | texto secundário sobre o cabeçalho vermelho                                  | 4,88:1 sobre brand-700 |
+| `danger-700`   | `#991b1b` | erros, campos inválidos, botão de perigo                                     | 8,31:1 sobre branco    |
+| `danger-800`   | `#7f1d1d` | hover do botão de perigo                                                     | 10,02:1 sobre branco   |
+| `info-700/800` | `#1d4ed8` | avisos informativos e etiquetas de situação "info" (continuam azuis)         | 6,70:1 sobre branco    |
+| `info-50/950`  | —         | fundo e texto do aviso informativo                                           | —                      |
+
+Regras adotadas:
+
+- **Branco predomina** (superfícies, cartões, campos); o fundo da página continua `slate-50` e textos, bordas e divisórias continuam nos tons neutros (`slate`, `neutral-border`).
+- **Erro × marca:** o perigo usa um vermelho-escuro distinto do vermelho da marca. Como antes, o significado nunca depende só da cor (ícone e texto, RNF08) e ações destrutivas sempre pedem confirmação.
+- **Informação continua azul:** com a marca vermelha, um aviso informativo vermelho pareceria erro.
+- **Sucesso** (verde) e **aviso** (âmbar) não mudaram.
+- **Foco:** contorno de 2 px vermelho; dentro do cabeçalho vermelho, branco (RNF07).
+- Também mudaram o `favicon.svg` e a `theme-color` do `index.html`.
+- **Pendente:** a cor exata do manual da instituição não foi encontrada em fonte pública; `#c8102e` deve ser confirmado com a FHDOD. Para trocar, altere os tokens em `src/styles/index.css` (e `VARIABLE_TARGETS` no plugin do Figma).
 
 ## Páginas e rotas
 
@@ -173,19 +203,22 @@ A página inicial mostra "API disponível" quando a comunicação com a API est�
 
 ## Testes e qualidade
 
-| Comando                 | O que faz                                                                           |
-| ----------------------- | ----------------------------------------------------------------------------------- |
-| `npm run check`         | formatação, lint, typecheck, testes e build, em sequência                           |
-| `npm run typecheck`     | TypeScript (`tsc -b`: aplicação, configurações e E2E)                               |
-| `npm run lint`          | ESLint sem avisos tolerados; `npm run lint:fix` corrige                             |
-| `npm run format:check`  | Prettier; `npm run format` corrige                                                  |
-| `npm test`              | testes de componentes e unidade (Vitest + jsdom); não precisam da API nem do `.env` |
-| `npm run test:coverage` | cobertura                                                                           |
-| `npm run test:e2e`      | ponta a ponta com Playwright, Chrome instalado e API local (veja abaixo)            |
+| Comando                            | O que faz                                                                           |
+| ---------------------------------- | ----------------------------------------------------------------------------------- |
+| `npm run check`                    | formatação, lint, typecheck, testes e build, em sequência                           |
+| `npm run typecheck`                | TypeScript (`tsc -b`: aplicação, configurações e E2E)                               |
+| `npm run lint`                     | ESLint sem avisos tolerados; `npm run lint:fix` corrige                             |
+| `npm run format:check`             | Prettier; `npm run format` corrige                                                  |
+| `npm test`                         | testes de componentes e unidade (Vitest + jsdom); não precisam da API nem do `.env` |
+| `npm run test:coverage`            | cobertura                                                                           |
+| `npm run test:e2e`                 | ponta a ponta com Playwright, Chrome instalado e API local (veja abaixo)            |
+| `cd figma-plugin && npm run check` | plugin do Figma: tipos (`@figma/plugin-typings`) e testes com a API simulada        |
 
 Se o Vitest acusar `Timeout waiting for worker to respond` em máquina sobrecarregada, use `npx vitest run --maxWorkers=2`.
 
 Situação verificada em 05/11/2026: `npx vitest run --maxWorkers=2` → **18 arquivos, 119 testes, todos aprovados**. Os testes de componentes e unidade cobrem o cliente HTTP, as variáveis de ambiente, a formatação, a autenticação (cliente, fluxo e troca de senha), os componentes de interface, a pesquisa pública e a manifestação, o dashboard, a Ouvidoria, setores, escalas, pesquisas, usuários e auditoria. A E2E não foi executada nesta verificação (exige a API e o MySQL locais).
+
+Situação verificada em 07/11/2026 (branch `feature/identidade-visual-vermelha-figma`): lint, typecheck e build aprovados; `npx vitest run --maxWorkers=2` → 18 arquivos, 119 testes aprovados; plugin do Figma → tipos e 5 testes aprovados. `npm run format:check` acusa somente `vercel.json`, que já estava fora do padrão antes desta etapa. A E2E não foi executada: o `.env` local da API aponta o banco para um servidor remoto e não há `TEST_DB_HOST` local (a E2E nunca deve usar serviços remotos). Detalhes em [`docs/relatorios/`](docs/relatorios/).
 
 Este repositório **não tem CI configurada** (não há `.github/workflows`). Rode `npm run check` antes de publicar.
 
@@ -228,6 +261,7 @@ A aplicação está publicada em <https://fhdod-frontend.vercel.app>.
 - `c293d71` — o frontend passou a ser um projeto independente (antes era a pasta `frontend/` do repositório da API).
 - `1587f99` — o **Supabase Auth foi substituído** pela autenticação da própria API (`/auth/login`, `/auth/refresh`, `/auth/logout`); o pacote `@supabase/supabase-js`, `src/lib/supabase.ts` e as variáveis `VITE_SUPABASE_*` foram removidos.
 - `7c56ca6` — `vercel.json` com o fallback de rotas da SPA.
+- Branch `feature/identidade-visual-vermelha-figma` (novembro de 2026, ainda sem commit) — identidade branco e vermelho e plugin do Figma ([relatório](docs/relatorios/2026-11-07-identidade-visual-vermelha-figma.md)).
 
 ## Limitações e pendências
 
@@ -235,4 +269,6 @@ A aplicação está publicada em <https://fhdod-frontend.vercel.app>.
 - **Página inicial:** o texto "Estado do desenvolvimento" está desatualizado e não há link para `/login` (o acesso administrativo é feito digitando `/login`).
 - **Publicação com `VITE_APP_ENV=development`** (veja [Publicação na Vercel](#publicação-na-vercel)).
 - **Sem CI** neste repositório.
+- **Cor institucional** `#c8102e` a confirmar com a FHDOD (veja [Identidade visual](#identidade-visual)).
+- **Figma:** o plugin em `figma-plugin/` ainda precisa ser executado manualmente no Figma Desktop para aplicar a nova identidade ao arquivo de design.
 - **E2E** depende de um clone local da API, do MySQL e do Chrome instalado; não roda contra a publicação.

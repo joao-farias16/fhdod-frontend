@@ -1,0 +1,13 @@
+{
+  "name": "FHDOD — Identidade visual",
+  "id": "fhdod-identidade-visual-vermelha",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "reasoning": "O plugin trabalha somente com o documento aberto; não faz requisições de rede."
+  }
+}
