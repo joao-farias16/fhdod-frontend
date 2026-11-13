@@ -27,7 +27,24 @@
   --color-info-800: #1e40af;
   --color-info-950: #172554;
   --color-neutral-border: #6b7280;
+
+  /*
+   * TV Wall (TL15, RF70): tamanhos medidos em 1920 × 1080 — NPS 160 px, números 64 px, rótulos
+   * 32 px e mínimo de 24 px. Aplicados pela variante `tv:` (abaixo); em telas menores a página
+   * usa a escala comum, sem rolagem horizontal.
+   */
+  --text-tv-hero: 160px;
+  --text-tv-hero--line-height: 1;
+  --text-tv-number: 64px;
+  --text-tv-number--line-height: 1.1;
+  --text-tv-label: 32px;
+  --text-tv-label--line-height: 1.25;
+  --text-tv-small: 24px;
+  --text-tv-small--line-height: 1.3;
 }
+
+/* Tela de TV (referência 1920 × 1080): largura e altura suficientes para a escala do RF70. */
+@custom-variant tv (@media (min-width: 1600px) and (min-height: 1000px));
 
 @layer base {
   html {

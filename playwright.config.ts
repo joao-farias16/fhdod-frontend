@@ -3,7 +3,13 @@ import { resolve } from 'node:path';
 
 import { defineConfig } from '@playwright/test';
 
-import { API_DIR, API_URL, BACKEND_PORT, FRONTEND_PORT } from './e2e/environment';
+import {
+  API_DIR,
+  API_URL,
+  BACKEND_PORT,
+  FRONTEND_PORT,
+  TV_WALL_HOSPITAL_SHORT_NAME,
+} from './e2e/environment';
 
 // Variáveis locais da API (banco de TESTE, JWT_SECRET etc.); nunca serviços remotos.
 const apiEnvFile = resolve(API_DIR, '.env');
@@ -49,19 +55,52 @@ export default defineConfig({
   reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
   use: {
     baseURL: `http://localhost:${FRONTEND_PORT}`,
-    channel: 'chrome',
     locale: 'pt-BR',
     timezoneId: 'America/Sao_Paulo',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'computador-1440', use: { viewport: { width: 1440, height: 900 } } },
+    {
+      name: 'computador-1440',
+      use: { channel: 'chrome', viewport: { width: 1440, height: 900 } },
+    },
     {
       name: 'celular-360',
       // O fluxo administrativo grava dados; roda uma vez, no computador.
       testIgnore: /(administracao|escalas-e-pesquisas|manifestacoes-painel-relatorios)\.spec\.ts/,
-      use: { viewport: { width: 360, height: 800 }, isMobile: true, hasTouch: true },
+      use: {
+        channel: 'chrome',
+        viewport: { width: 360, height: 800 },
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
+      // TL15 (ET10): resolução de referência da TV Wall (RF70, Tabela 22).
+      name: 'tv-1920',
+      testMatch: /tv-wall\.spec\.ts/,
+      use: { channel: 'chrome', viewport: { width: 1920, height: 1080 } },
+    },
+    // RNF25 e Seção 12: Firefox e WebKit (motor do Safari), com os navegadores do Playwright
+    // (`npx playwright install firefox webkit`), nos fluxos que não gravam dados administrativos.
+    // Rode-os em outra invocação (`npm run test:e2e:navegadores`; `npm run test:e2e` faz as duas):
+    // a API limita o login a 30 tentativas a cada 15 min por IP (Seção 10), em memória, e todos os
+    // projetos juntos fazem cerca de 40 logins. Cada invocação sobe uma API nova (contagem zerada).
+    {
+      name: 'firefox-1440',
+      testMatch: /(pesquisa-publica|t12-autenticacao|tv-wall|acessibilidade)\.spec\.ts/,
+      use: { browserName: 'firefox', viewport: { width: 1440, height: 900 } },
+    },
+    {
+      name: 'webkit-390',
+      testMatch: /(pesquisa-publica|t12-autenticacao|tv-wall|acessibilidade)\.spec\.ts/,
+      use: {
+        browserName: 'webkit',
+        viewport: { width: 390, height: 844 },
+        isMobile: true,
+        hasTouch: true,
+      },
     },
   ],
   webServer: [
@@ -79,6 +118,9 @@ export default defineConfig({
         CORS_ORIGIN: `http://localhost:${FRONTEND_PORT}`,
         // Links e QR Code das pesquisas apontam para o frontend dos testes (ET05, T02).
         PUBLIC_APP_URL: `http://localhost:${FRONTEND_PORT}`,
+        // TV Wall (E42): o banco de teste tem vários hospitais; exibe o hospital exclusivo da
+        // TV Wall criado pelo e2e:fixture nesta execução (ET10).
+        TV_WALL_HOSPITAL_SHORT_NAME,
         LOG_LEVEL: 'warn',
       },
     },

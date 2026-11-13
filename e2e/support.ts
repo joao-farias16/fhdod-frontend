@@ -57,6 +57,15 @@ export interface E2EFixture {
   accounts: { sa: E2EAccount; vi: E2EAccount; ou: E2EAccount; ge: E2EAccount };
   /** Pesquisas publicadas do Pronto Atendimento E2E (ET06): ativa e desativada. */
   surveys: { active: string; inactive: string };
+  /**
+   * Hospital exclusivo da E2E da TV Wall (ET10), exibido pela API dos testes e sem respostas no
+   * início: nomes dos dois setores e slugs da pesquisa publicada de cada um.
+   */
+  tvWall: {
+    hospitalShortName: string;
+    sectors: { primary: string; secondary: string };
+    surveys: { primary: string; secondary: string };
+  };
 }
 
 /**
@@ -64,10 +73,13 @@ export interface E2EFixture {
  * TEST_DB_*). O frontend não importa código da API: apenas aciona o comando publicado por ela.
  */
 export function runFixture(command: 'setup' | 'teardown'): void {
-  const result = spawnSync('npm', ['run', 'e2e:fixture', '--', command, FIXTURE_FILE], {
+  // Uma única linha de comando com o caminho entre aspas: no Windows o npm (npm.cmd) só roda pelo
+  // shell, que não escapa argumentos — um caminho com espaço ("C:\Users\Nome Sobrenome\...") era
+  // partido ao meio (EPERM) e o Node avisava DEP0190.
+  const result = spawnSync(`npm run e2e:fixture -- ${command} "${FIXTURE_FILE}"`, {
     cwd: API_DIR,
     stdio: 'inherit',
-    shell: process.platform === 'win32',
+    shell: true,
   });
   if (result.status !== 0) throw new Error(`Falha ao preparar os dados E2E (${command}).`);
 }

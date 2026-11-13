@@ -1,4 +1,14 @@
+import { randomBytes } from 'node:crypto';
 import { resolve } from 'node:path';
+
+/**
+ * Sufixo desta execução (6 hexadecimais), compartilhado pelo `e2e:fixture` da API, que cria o
+ * hospital exclusivo da TV Wall `E2E-TV-<sufixo>`, e pela API dos testes, que o exibe no E42
+ * (TV_WALL_HOSPITAL_SHORT_NAME, ET10). Definido uma vez no processo principal do Playwright; os
+ * workers e o script do fixture herdam o mesmo valor pelo ambiente.
+ */
+process.env.E2E_RUN_ID ??= randomBytes(3).toString('hex');
+export const TV_WALL_HOSPITAL_SHORT_NAME = `E2E-TV-${process.env.E2E_RUN_ID}`;
 
 /** Portas próprias dos testes E2E (não reutilizam os servidores de desenvolvimento). */
 export const BACKEND_PORT = '3334';

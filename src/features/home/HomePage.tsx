@@ -28,8 +28,9 @@ export function HomePage() {
             Estado do desenvolvimento
           </h2>
           <p className="mt-3 text-slate-700">
-            Esta é a base técnica do sistema. Pesquisa, painel, Ouvidoria, relatórios e TV Wall
-            serão disponibilizados nas próximas etapas.
+            Pesquisa pública, painel de indicadores, Ouvidoria, relatórios Excel e TV Wall estão
+            disponíveis. A pesquisa é aberta pelo QR Code ou link de cada setor; as áreas
+            administrativas exigem login.
           </p>
         </section>
       </div>
