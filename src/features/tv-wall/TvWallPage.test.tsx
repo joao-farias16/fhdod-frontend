@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createQueryClient } from '../../app/query-client';
 import { apiError, FakeAuthClient, json, mockApi, renderApp } from '../../test/helpers';
-import type { TvWallSummary } from './tv-wall-api';
+import { TV_REQUEST_TIMEOUT_MS, type TvWallSummary } from './tv-wall-api';
 import { TvWallPage } from './TvWallPage';
 
 function summary(overrides: Partial<TvWallSummary> = {}): TvWallSummary {
@@ -139,6 +139,22 @@ describe('TL15 — conteúdo e isolamento (T29, RF68, RF72)', () => {
     expect(text).not.toContain('FHD-2026');
     expect(text).not.toContain('@example.com');
     expect(text).not.toContain('Equipe A');
+  });
+
+  it('exibe no máximo 8 setores (RF68), na ordem recebida', async () => {
+    const many = Array.from({ length: 10 }, (_, i) => ({
+      name: `Setor ${String(i + 1)}`,
+      n: 20,
+      nps: 90 - i,
+      promotersPercent: 50,
+      detractorsPercent: 10,
+    }));
+    mockApi({ [SUMMARY]: () => json({ data: summary({ sectors: many }) }) });
+    renderTv();
+    await screen.findByText('44,7');
+    expect(
+      Array.from(document.querySelectorAll('[data-tv-sector]')).map((el) => el.textContent),
+    ).toEqual(many.slice(0, 8).map((s) => s.name));
   });
 
   it('período pela URL: ?periodo=7d; valor inválido usa 30d', async () => {
@@ -314,6 +330,49 @@ describe('TL15 — atualização automática (T31, RF69)', () => {
     await advance(62_000);
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(npsValue()).toBe('44,7');
+  });
+
+  it('requisição que nunca responde é encerrada no prazo e não trava as consultas seguintes', async () => {
+    // Regressão (auditoria ET10/ET11): sem prazo, a consulta pendurada ficava "em andamento" para
+    // sempre, o TanStack não iniciava outra e a TV parava nos mesmos dados com a API de volta.
+    let hang = false;
+    let requests = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+        requests += 1;
+        if (!hang) return Promise.resolve(json({ data: summary() }));
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
+        });
+      }),
+    );
+    renderTv();
+    await screen.findByText('44,7');
+    expect(requests).toBe(1);
+
+    hang = true;
+    await advance(60_000);
+    expect(requests).toBe(2);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    // Passado o prazo (e a nova tentativa rápida, que também expira), o aviso aparece com os
+    // últimos dados.
+    await advance(TV_REQUEST_TIMEOUT_MS);
+    await advance(2_000 + TV_REQUEST_TIMEOUT_MS);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Sem conexão com o servidor.');
+    expect(npsValue()).toBe('44,7');
+
+    // A API volta: a consulta do ciclo seguinte é feita e o aviso some.
+    hang = false;
+    const before = requests;
+    await advance(60_000);
+    expect(requests).toBeGreaterThan(before);
+    await vi.waitFor(() => {
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
   });
 
   it('sem dados ainda e API fora: mensagem de erro e nova tentativa automática', async () => {

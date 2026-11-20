@@ -25,7 +25,7 @@ repositório da API: `docs/tv-wall.md` (E42).
   de −100 a 100. Pontos sem respostas ou suprimidos ficam vazios (a linha é interrompida; nenhum
   valor é inventado). O SVG não tem texto: eixos e datas são HTML (24 px). Leitores de tela têm a
   série completa em uma tabela.
-- **NPS por setor:** até 8 setores, na ordem do E42 (maior NPS primeiro), com o número de
+- **NPS por setor:** até 8 setores (limite também aplicado no frontend, `TV_MAX_SECTORS`), na ordem do E42 (maior NPS primeiro), com o número de
   respostas de cada um.
 - **Convite** (texto institucional fixo): "Sua opinião melhora o nosso atendimento. Avalie o setor
   em que você foi atendido pelo QR Code do cartaz." e o aviso "Ambiente acadêmico — dados fictícios.".
@@ -52,15 +52,16 @@ total, não completa a lista de setores e não exibe nenhum `n` que o E42 tenha 
 
 ## Atualização (RF69)
 
-| Regra                | Implementação (`useTvWallSummary`, `usePeriodicReload`)                                                                                                                                                              |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Consulta a cada 60 s | `refetchInterval: 60_000` do TanStack Query, sem recarregar a página; o mesmo intervalo do cache público do E42 (`max-age=60`)                                                                                       |
-| Cache de 60 s        | `staleTime` de 60 s: nenhuma consulta antes de os dados terem 60 s. O `fetch` usa `cache: 'no-store'` (cliente HTTP único), para cada consulta trazer o valor atual do servidor — nova resposta aparece em até ~60 s |
-| Falha da API         | rede, 5xx, 429 ou resposta fora do contrato: os dados anteriores são mantidos (`data` do TanStack) e o aviso aparece. Uma nova tentativa rápida (2 s) só para falhas transitórias; 400 e 429 esperam o próximo ciclo |
-| Sem duplicidade      | consultas iguais são compartilhadas; o `AbortSignal` não é usado (com ele, a montagem dupla do `StrictMode` cancelava a 1ª consulta e fazia outra)                                                                   |
-| Aba oculta           | o intervalo pausa (`refetchIntervalInBackground: false`); ao voltar, consulta na hora se os dados tiverem mais de 60 s                                                                                               |
-| Recarga a cada 6 h   | `window.location.reload()` após 6 h. Com a API fora e dados na tela, a recarga é **adiada** até a API voltar (recarregar apagaria os últimos dados válidos)                                                          |
-| Temporizadores       | todos criados em `useEffect` e encerrados ao desmontar (testado)                                                                                                                                                     |
+| Regra                | Implementação (`useTvWallSummary`, `usePeriodicReload`)                                                                                                                                                                                                                                             |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Consulta a cada 60 s | `refetchInterval: 60_000` do TanStack Query, sem recarregar a página; o mesmo intervalo do cache público do E42 (`max-age=60`)                                                                                                                                                                      |
+| Cache de 60 s        | `staleTime` de 60 s: nenhuma consulta antes de os dados terem 60 s. O `fetch` usa `cache: 'no-store'` (cliente HTTP único), para cada consulta trazer o valor atual do servidor — nova resposta aparece em até ~60 s                                                                                |
+| Falha da API         | rede, 5xx, 429 ou resposta fora do contrato: os dados anteriores são mantidos (`data` do TanStack) e o aviso aparece. Uma nova tentativa rápida (2 s) só para falhas transitórias; 400 e 429 esperam o próximo ciclo                                                                                |
+| Tempo limite         | cada consulta ao E42 tem prazo de 15 s (`TV_REQUEST_TIMEOUT_MS`); vencido, vira falha de conexão (últimos dados + aviso + nova tentativa no ciclo seguinte). Sem o prazo, uma requisição pendurada bloqueava todas as seguintes até a recarga de 6 h (defeito corrigido na auditoria de 20/11/2026) |
+| Sem duplicidade      | consultas iguais são compartilhadas; o `AbortSignal` não é usado (com ele, a montagem dupla do `StrictMode` cancelava a 1ª consulta e fazia outra)                                                                                                                                                  |
+| Aba oculta           | o intervalo pausa (`refetchIntervalInBackground: false`); ao voltar, consulta na hora se os dados tiverem mais de 60 s                                                                                                                                                                              |
+| Recarga a cada 6 h   | `window.location.reload()` após 6 h. Com a API fora e dados na tela, a recarga é **adiada** até a API voltar (recarregar apagaria os últimos dados válidos)                                                                                                                                         |
+| Temporizadores       | todos criados em `useEffect` e encerrados ao desmontar (testado)                                                                                                                                                                                                                                    |
 
 ## Legibilidade (RF70, RNF06)
 
@@ -79,6 +80,8 @@ avisos em vermelho-escuro/âmbar-escuro sobre fundo claro — **todo texto com c
 mais**. O significado nunca depende só da cor (texto e ícone, RNF08). Em 1920 × 1080 não há rolagem
 horizontal nem vertical, inclusive com o aviso de indisponibilidade. Em telas menores a página usa
 a escala comum e não tem rolagem horizontal (verificado em 360 e 1440 px).
+
+**Altura mínima da escala de TV:** a escala do RF70 vale com viewport de pelo menos 1600 × 1000 px; 1000 px é o mínimo medido para o pior caso (8 setores + aviso de falha) sem sobrepor o rodapé. Num navegador **sem tela cheia** em monitor 1080p (viewport ≈ 1920 × 950) a página usa a escala comum (NPS 72 px, textos de 18 px) — use **F11/modo quiosque**. Nomes de setor muito longos são cortados com reticências (o `title` não aparece na TV).
 
 **Leitura a 3 m:** verificação física, ainda **não realizada** (não pode ser comprovada por teste
 automatizado). Procedimento sugerido: TV de 40" ou mais em 1920 × 1080, `/tv` em tela cheia

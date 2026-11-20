@@ -231,6 +231,8 @@ Situação verificada em 12/11/2026 (ET10 e ET11, `develop` com alterações ain
 - E2E → **70 aprovados, 0 reprovados**: Chrome 42 (1440, 360 e 1920 px) e Firefox/WebKit 28; 14 casos ignorados por desenho (gravam dados e rodam em um projeto só). Inclui T39 (axe, 0 violações em 22 telas nos 4 navegadores/tamanhos), T40 (envio máx. 72 ms; painel máx. 852 ms) e T41.
 - Resultados completos, caso a caso, e evidências (JUnit, capturas, axe) no repositório da API: `docs/plano-e-relatorio-de-testes.md` e `docs/evidencias/ET10-ET11/`.
 
+Auditoria de 20/11/2026 (ET10/ET11, `develop`, sem commit; API real local, banco de teste): `format:check`, `lint`, `typecheck` e `build` aprovados; `npx vitest run --maxWorkers=2` → **19 arquivos, 137 testes aprovados** (+2: prazo de consulta e limite de 8 setores); E2E → **70 aprovados, 0 reprovados** (Chrome 42; Firefox/WebKit 28, após `npx playwright install firefox webkit`); `npm audit --omit=dev` → 0 vulnerabilidades. Defeito corrigido: consulta pendurada ao E42 travava as atualizações (agora 15 s de prazo). Sem `--maxWorkers=2`, em máquina com pouca memória livre, a suíte do Vitest oscila por tempo esgotado (5 a 32 falhas, sem relação com o código). **Continuam pendentes:** leitura física a 3 m (T31 manual) e demais testes manuais — por isso a ET11 **não** pode ser declarada concluída.
+
 Este repositório **não tem CI configurada** (não há `.github/workflows`). Rode `npm run check` antes de publicar.
 
 ### Testes ponta a ponta (E2E)

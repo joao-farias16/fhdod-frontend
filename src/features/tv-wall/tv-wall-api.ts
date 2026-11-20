@@ -22,6 +22,14 @@ export const TV_RELOAD_INTERVAL_MS = 6 * 60 * 60 * 1000;
  * (duas consultas perdidas): o aviso aparece mesmo que nenhuma falha tenha sido registrada.
  */
 export const TV_STALE_AFTER_MS = 150_000;
+/**
+ * Tempo máximo de uma consulta ao E42. Sem ele, uma requisição pendurada (API lenta, conexão meio
+ * aberta) mantém a consulta "em andamento" para sempre e o TanStack Query não inicia as seguintes:
+ * a TV ficaria parada nos mesmos dados até a recarga de 6 h, mesmo com a API de volta.
+ */
+export const TV_REQUEST_TIMEOUT_MS = 15_000;
+/** RF68: no máximo 8 setores na tela (a API já limita; aqui é a garantia do layout sem rolagem). */
+export const TV_MAX_SECTORS = 8;
 
 export interface TvWallOverall {
   n: number | null;
@@ -148,19 +156,39 @@ function pickAllowedFields(value: TvWallSummary): TvWallSummary {
         suppressed,
       })),
     },
-    sectors: value.sectors.map(({ name, n, nps, promotersPercent, detractorsPercent }) => ({
-      name,
-      n,
-      nps,
-      promotersPercent,
-      detractorsPercent,
-    })),
+    sectors: value.sectors
+      .slice(0, TV_MAX_SECTORS)
+      .map(({ name, n, nps, promotersPercent, detractorsPercent }) => ({
+        name,
+        n,
+        nps,
+        promotersPercent,
+        detractorsPercent,
+      })),
   };
 }
 
 /** E42 com validação: conteúdo fora do contrato vira erro e não substitui os últimos dados. */
 export async function fetchTvWallSummary(period: TvWallPeriod): Promise<TvWallSummary> {
-  const data = await apiGet<unknown>(`/tv-wall/summary?period=${period}`);
+  // Controlador próprio (não o do TanStack, ver useTvWallSummary): só encerra a consulta que
+  // passou do prazo, que vira falha de conexão — a TV mantém os últimos dados e tenta de novo.
+  const controller = new AbortController();
+  const timer = setTimeout(() => {
+    controller.abort();
+  }, TV_REQUEST_TIMEOUT_MS);
+  let data: unknown;
+  try {
+    data = await apiGet<unknown>(`/tv-wall/summary?period=${period}`, {
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new ApiError(0, 'NETWORK_ERROR', 'Não foi possível conectar ao servidor.');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
   if (!isTvWallSummary(data)) {
     throw new ApiError(200, 'UNEXPECTED_RESPONSE', 'Resposta inesperada do servidor.');
   }
