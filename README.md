@@ -1,6 +1,6 @@
 # FHDOD — Interface web (frontend)
 
-Interface web do **FHDOD — Sistema de Gestão da Experiência do Paciente** (Fundação Hospitalar Dr. Oswaldo Diesel): pesquisa pública por QR Code ou link, manifestação, área administrativa (usuários, auditoria, setores, escalas, pesquisas), Ouvidoria, painéis com NPS, relatórios Excel e a **TV Wall** pública em `/tv` (veja [Situação das funcionalidades](#situação-das-funcionalidades) e [`docs/tv-wall.md`](docs/tv-wall.md)).
+Interface web do **FHDOD — Sistema de Gestão da Experiência do Paciente** (Fundação Hospitalar Dr. Oswaldo Diesel): pesquisa pública por QR Code ou link, manifestação, área administrativa (usuários, auditoria, setores, escalas, pesquisas), Ouvidoria, painéis com NPS, relatórios Excel e a **TV Wall** pública em `/tv` (veja [Situação das funcionalidades](#situação-das-funcionalidades), o [inventário de telas](docs/inventario-de-telas.md) e [`docs/tv-wall.md`](docs/tv-wall.md)).
 
 - **Aplicação publicada:** <https://fhdod-frontend.vercel.app> (Vercel)
 - **API usada pela publicação:** `https://fhdod-experiencia-paciente.onrender.com` (endereço público, incluído no build por `VITE_API_URL`)
@@ -55,7 +55,8 @@ fhdod-frontend/                  raiz do repositório
 ├── e2e/                         testes ponta a ponta (Playwright) e environment.ts (portas e pastas)
 ├── figma-plugin/                plugin do Figma Desktop que atualiza o arquivo de design para a
 │                                identidade branco e vermelho e cria as telas ausentes (README próprio)
-├── docs/                        tv-wall.md (TL15) e relatorios/ (relatórios técnicos das etapas)
+├── docs/                        inventario-de-telas.md (rotas, telas, estados e APIs), tv-wall.md (TL15)
+│                                e relatorios/ (relatórios técnicos das etapas)
 ├── public/                      arquivos estáticos
 ├── index.html
 ├── package.json · package-lock.json
@@ -106,27 +107,29 @@ Regras adotadas:
 
 ## Páginas e rotas
 
-| Rota                                | Tela                                                  | Acesso                           |
-| ----------------------------------- | ----------------------------------------------------- | -------------------------------- |
-| `/`                                 | página inicial com a situação da API (`GET /health`)  | público                          |
-| `/p/:slug` (`?origem=qr` ou `link`) | pesquisa pública de satisfação e manifestação         | público, sem login e sem cookies |
-| `/tv` (`?periodo=7d`, `30d`, `90d`) | TV Wall (TL15): indicadores agregados, sem menu/links | público, sem login e sem cookies |
-| `/login`                            | login administrativo                                  | público                          |
-| `/trocar-senha`                     | troca de senha (obrigatória no primeiro acesso)       | sessão                           |
-| `/painel`                           | dashboard geral                                       | `dashboard:read`                 |
-| `/painel/setores/:sectorId`         | dashboard por setor                                   | `dashboard:read`                 |
-| `/ouvidoria/manifestacoes`          | lista de manifestações                                | `manifestations:read`            |
-| `/ouvidoria/manifestacoes/:id`      | detalhe e tratamento da manifestação                  | `manifestations:read`            |
-| `/relatorios`                       | exportação de relatórios Excel                        | alguma permissão `reports:*`     |
-| `/admin/usuarios`                   | usuários                                              | `users:read`                     |
-| `/admin/auditoria`                  | auditoria                                             | `audit_logs:read`                |
-| `/admin/setores`                    | setores e equipes                                     | `teams:create`                   |
-| `/admin/turnos`                     | escala e turnos                                       | `shifts:read`                    |
-| `/admin/escalas/importar`           | importação de escalas (CSV)                           | `rosters:import`                 |
-| `/admin/pesquisas`                  | lista de pesquisas                                    | `surveys:read`                   |
-| `/admin/pesquisas/:id`              | edição de pesquisa (dados, perguntas, publicação, QR) | `surveys:update`                 |
-| `/admin/pesquisas/:id/cartaz`       | cartaz A4 com QR Code, sem o layout administrativo    | `surveys:read`                   |
-| qualquer outra                      | página 404                                            | público                          |
+O detalhamento de cada tela (componentes, ações, estados, diálogos e endpoints) está em [`docs/inventario-de-telas.md`](docs/inventario-de-telas.md).
+
+| Rota                                | Tela                                                   | Acesso                           |
+| ----------------------------------- | ------------------------------------------------------ | -------------------------------- |
+| `/`                                 | página inicial com a situação da API (`GET /health`)   | público                          |
+| `/p/:slug` (`?origem=qr` ou `link`) | pesquisa pública de satisfação e manifestação          | público, sem login e sem cookies |
+| `/tv` (`?periodo=7d`, `30d`, `90d`) | TV Wall (TL15): indicadores agregados, sem menu/links  | público, sem login e sem cookies |
+| `/login`                            | login administrativo                                   | público                          |
+| `/trocar-senha`                     | troca de senha (obrigatória no primeiro acesso)        | sessão                           |
+| `/painel`                           | dashboard geral                                        | `dashboard:read`                 |
+| `/painel/setores/:sectorId`         | dashboard por setor                                    | `dashboard:read`                 |
+| `/ouvidoria/manifestacoes`          | lista de manifestações                                 | `manifestations:read`            |
+| `/ouvidoria/manifestacoes/:id`      | detalhe e tratamento da manifestação                   | `manifestations:read`            |
+| `/relatorios`                       | exportação de relatórios Excel                         | alguma permissão `reports:*`     |
+| `/admin/usuarios`                   | usuários                                               | `users:read`                     |
+| `/admin/auditoria`                  | auditoria                                              | `audit_logs:read`                |
+| `/admin/setores`                    | setores e equipes (criar setor exige `sectors:create`) | `teams:create`                   |
+| `/admin/turnos`                     | escala e turnos                                        | `shifts:read`                    |
+| `/admin/escalas/importar`           | importação de escalas (CSV)                            | `rosters:import`                 |
+| `/admin/pesquisas`                  | lista de pesquisas                                     | `surveys:read`                   |
+| `/admin/pesquisas/:id`              | edição de pesquisa (dados, perguntas, publicação, QR)  | `surveys:update`                 |
+| `/admin/pesquisas/:id/cartaz`       | cartaz A4 com QR Code, sem o layout administrativo     | `surveys:read`                   |
+| qualquer outra                      | página 404                                             | público                          |
 
 Depois do login, o Superadministrador vai para `/admin/usuarios`; os demais perfis vão para `/painel`. Perfis: Superadministrador, Administrador de setor, Gestão, Ouvidoria e Visualizador (`src/features/auth/auth-types.ts`).
 
@@ -134,7 +137,7 @@ A TV Wall fica fora dos layouts do sistema (sem cabeçalho com links, menu ou ro
 
 ## Situação das funcionalidades
 
-Levantamento feito pelo código, pelos testes automatizados e por acesso à aplicação publicada (novembro de 2026). "Implementada" significa que a tela chama os endpoints reais da API e tem testes de componentes e/ou E2E; as rotas administrativas da publicação não foram exercitadas com login.
+Levantamento feito pelo código e pelos testes automatizados (revisado em 21/11/2026) e, na primeira versão, por acesso à aplicação publicada (novembro de 2026). "Implementada" significa que a tela chama os endpoints reais da API e tem testes de componentes e/ou E2E; as rotas administrativas da publicação não foram exercitadas com login.
 
 | Funcionalidade                 | Situação            | O que existe                                                                                                                                                                                                                                                                                                          |
 | ------------------------------ | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -222,16 +225,18 @@ Se o Vitest acusar `Timeout waiting for worker to respond` em máquina sobrecarr
 
 Situação verificada em 05/11/2026: `npx vitest run --maxWorkers=2` → **18 arquivos, 119 testes, todos aprovados**. Os testes de componentes e unidade cobrem o cliente HTTP, as variáveis de ambiente, a formatação, a autenticação (cliente, fluxo e troca de senha), os componentes de interface, a pesquisa pública e a manifestação, o dashboard, a Ouvidoria, setores, escalas, pesquisas, usuários e auditoria. A E2E não foi executada nesta verificação (exige a API e o MySQL locais).
 
-Situação verificada em 07/11/2026 (branch `feature/identidade-visual-vermelha-figma`): lint, typecheck e build aprovados; `npx vitest run --maxWorkers=2` → 18 arquivos, 119 testes aprovados; plugin do Figma → tipos e 5 testes aprovados. `npm run format:check` acusa somente `vercel.json`, que já estava fora do padrão antes desta etapa. A E2E não foi executada: o `.env` local da API aponta o banco para um servidor remoto e não há `TEST_DB_HOST` local (a E2E nunca deve usar serviços remotos). Detalhes em [`docs/relatorios/`](docs/relatorios/).
+Situação verificada em 07/11/2026 (branch `feature/identidade-visual-vermelha-figma`, depois integrada à `develop` no commit `6375032`): lint, typecheck e build aprovados; `npx vitest run --maxWorkers=2` → 18 arquivos, 119 testes aprovados; plugin do Figma → tipos e 5 testes aprovados. Na época, `npm run format:check` acusava somente `vercel.json` (corrigido nesse mesmo commit). A E2E não foi executada: o `.env` local da API aponta o banco para um servidor remoto e não há `TEST_DB_HOST` local (a E2E nunca deve usar serviços remotos). Detalhes em [`docs/relatorios/`](docs/relatorios/).
 
-Situação verificada em 12/11/2026 (ET10 e ET11, `develop` com alterações ainda sem commit), com a API e um MySQL 8.0.46 local de testes:
+Situação verificada em 12/11/2026 (ET10 e ET11; commit `f4737d5`), com a API e um MySQL 8.0.46 local de testes:
 
 - `npm run format:check`, `npm run lint`, `npm run typecheck` e `npm run build` (produção) **aprovados**; JavaScript público compactado ≈ 125 KB na pesquisa e ≈ 120 KB na TV (limite do RNF26: 250 KB); nenhum segredo da API no `dist/`.
 - `npx vitest run --maxWorkers=2` → **19 arquivos, 135 testes aprovados** (16 novos da TV Wall).
 - E2E → **70 aprovados, 0 reprovados**: Chrome 42 (1440, 360 e 1920 px) e Firefox/WebKit 28; 14 casos ignorados por desenho (gravam dados e rodam em um projeto só). Inclui T39 (axe, 0 violações em 22 telas nos 4 navegadores/tamanhos), T40 (envio máx. 72 ms; painel máx. 852 ms) e T41.
 - Resultados completos, caso a caso, e evidências (JUnit, capturas, axe) no repositório da API: `docs/plano-e-relatorio-de-testes.md` e `docs/evidencias/ET10-ET11/`.
 
-Auditoria de 20/11/2026 (ET10/ET11, `develop`, sem commit; API real local, banco de teste): `format:check`, `lint`, `typecheck` e `build` aprovados; `npx vitest run --maxWorkers=2` → **19 arquivos, 137 testes aprovados** (+2: prazo de consulta e limite de 8 setores); E2E → **70 aprovados, 0 reprovados** (Chrome 42; Firefox/WebKit 28, após `npx playwright install firefox webkit`); `npm audit --omit=dev` → 0 vulnerabilidades. Defeito corrigido: consulta pendurada ao E42 travava as atualizações (agora 15 s de prazo). Sem `--maxWorkers=2`, em máquina com pouca memória livre, a suíte do Vitest oscila por tempo esgotado (5 a 32 falhas, sem relação com o código). **Continuam pendentes:** leitura física a 3 m (T31 manual) e demais testes manuais — por isso a ET11 **não** pode ser declarada concluída.
+Auditoria de 20/11/2026 (ET10/ET11, `develop`, commit `7dafecf`; API real local, banco de teste): `format:check`, `lint`, `typecheck` e `build` aprovados; `npx vitest run --maxWorkers=2` → **19 arquivos, 137 testes aprovados** (+2: prazo de consulta e limite de 8 setores); E2E → **70 aprovados, 0 reprovados** (Chrome 42; Firefox/WebKit 28, após `npx playwright install firefox webkit`); `npm audit --omit=dev` → 0 vulnerabilidades. Defeito corrigido: consulta pendurada ao E42 travava as atualizações (agora 15 s de prazo). Sem `--maxWorkers=2`, em máquina com pouca memória livre, a suíte do Vitest oscila por tempo esgotado (5 a 32 falhas, sem relação com o código). **Continuam pendentes:** leitura física a 3 m (T31 manual) e demais testes manuais — por isso a ET11 **não** pode ser declarada concluída.
+
+Revisão de 21/11/2026 (`develop`, árvore limpa): `npm run format:check` **aprovado**; `npx vitest run --maxWorkers=2` → **19 arquivos, 137 testes aprovados**. Lint, typecheck, build e E2E não foram reexecutados nesta revisão (que só alterou documentação).
 
 Este repositório **não tem CI configurada** (não há `.github/workflows`). Rode `npm run check` antes de publicar.
 
@@ -290,16 +295,17 @@ A aplicação está publicada em <https://fhdod-frontend.vercel.app>.
 - `c293d71` — o frontend passou a ser um projeto independente (antes era a pasta `frontend/` do repositório da API).
 - `1587f99` — o **Supabase Auth foi substituído** pela autenticação da própria API (`/auth/login`, `/auth/refresh`, `/auth/logout`); o pacote `@supabase/supabase-js`, `src/lib/supabase.ts` e as variáveis `VITE_SUPABASE_*` foram removidos.
 - `7c56ca6` — `vercel.json` com o fallback de rotas da SPA.
-- Branch `feature/identidade-visual-vermelha-figma` (novembro de 2026, ainda sem commit) — identidade branco e vermelho e plugin do Figma ([relatório](docs/relatorios/2026-11-07-identidade-visual-vermelha-figma.md)).
-- ET10 e ET11 (12/11/2026, em `develop`, ainda sem commit) — TV Wall (`/tv`), E2E em Firefox/WebKit e TV, axe (T39), desempenho (T40), T41 na interface e correções (fixture da E2E no Windows, acessibilidade do gráfico do painel, `HydrateFallback`, texto da página inicial).
+- `6375032` (07/11/2026, integrado à `develop`; veio da branch `feature/identidade-visual-vermelha-figma`) — identidade branco e vermelho e plugin do Figma ([relatório](docs/relatorios/2026-11-07-identidade-visual-vermelha-figma.md)).
+- `f4737d5` (12/11/2026, `develop`) — ET10 e ET11: TV Wall (`/tv`), E2E em Firefox/WebKit e TV, axe (T39), desempenho (T40), T41 na interface e correções (fixture da E2E no Windows, acessibilidade do gráfico do painel, `HydrateFallback`, texto da página inicial).
+- `7dafecf` (20/11/2026, `develop`) — prazo de 15 s nas consultas da TV Wall e limite de 8 setores exibidos.
 
 ## Limitações e pendências
 
-- **TV Wall:** leitura física a 3 m **não verificada** (procedimento em [`docs/tv-wall.md`](docs/tv-wall.md)); sem tela no Figma; publicação na Vercel ainda não feita com a TL15 (a versão publicada é anterior).
+- **TV Wall:** leitura física a 3 m **não verificada** (procedimento em [`docs/tv-wall.md`](docs/tv-wall.md)); sem tela no Figma; publicação na Vercel com a TL15 **não verificada** (a última verificação da publicação, em 05/11/2026, é anterior à TV Wall).
 - **Página inicial:** não há link para `/login` (o acesso administrativo é feito digitando `/login`).
 - **Testes manuais não executados:** leitor de tela (T39), QR Code com câmera (T02), abertura do `.xlsx` no Excel/LibreOffice (T20). T35 (OpenAPI) bloqueado na API.
 - **Publicação com `VITE_APP_ENV=development`** (veja [Publicação na Vercel](#publicação-na-vercel)).
 - **Sem CI** neste repositório.
 - **Cor institucional** `#c8102e` a confirmar com a FHDOD (veja [Identidade visual](#identidade-visual)).
-- **Figma:** o plugin em `figma-plugin/` ainda precisa ser executado manualmente no Figma Desktop para aplicar a nova identidade ao arquivo de design.
+- **Figma:** o plugin em `figma-plugin/` ainda precisa ser executado manualmente no Figma Desktop para aplicar a nova identidade ao arquivo de design; não há confirmação neste repositório de que isso já foi feito. A TV Wall (TL15) não é criada pelo plugin.
 - **E2E** depende de um clone local da API, do MySQL, do Chrome instalado e dos navegadores Firefox/WebKit do Playwright; não roda contra a publicação.

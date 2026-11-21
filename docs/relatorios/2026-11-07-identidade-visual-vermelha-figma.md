@@ -5,6 +5,8 @@
 - **Branch:** `feature/identidade-visual-vermelha-figma`
 - **Situação:** implementado e verificado localmente; **sem commit, push ou Pull Request**
 
+> **Nota de 21/11/2026:** este é um relatório histórico, mantido como foi escrito em 07/11/2026. Depois dele, o trabalho foi commitado e integrado à `develop` (`6375032`), o `vercel.json` foi formatado, e a TV Wall (TL15), citada abaixo como inexistente, foi implementada (`f4737d5`). Para o estado atual, veja o `README.md` e `docs/inventario-de-telas.md`.
+
 ## 1. Resumo
 
 A identidade visual do frontend passou de branco e azul para **branco e vermelho**, seguindo a
