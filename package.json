@@ -20,7 +20,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
+    "test:e2e": "npm run test:e2e:chrome && npm run test:e2e:navegadores",
+    "test:e2e:chrome": "playwright test --project=computador-1440 --project=celular-360 --project=tv-1920",
+    "test:e2e:navegadores": "playwright test --project=firefox-1440 --project=webkit-390",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
@@ -33,6 +35,7 @@
     "react-router": "^8.4.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",

@@ -226,14 +226,16 @@ export function TrendChart({
         NPS {GRANULARITY_LABELS[granularity]} (escala de −100 a 100).
       </figcaption>
       <div className="relative">
+        {/* T39: grupo (e não img), para que os alvos focáveis de cada ponto sejam acessíveis — o
+            conteúdo de um img é tratado como decorativo, e aria-label sem papel é proibido. */}
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="h-auto w-full"
-          role="img"
+          role="group"
           aria-label={`Tendência do NPS ${GRANULARITY_LABELS[granularity]}; os valores estão na tabela abaixo.`}
         >
           {[100, 50, 0, -50, -100].map((tick) => (
-            <g key={tick}>
+            <g key={tick} aria-hidden="true">
               <line
                 x1={pad.left}
                 x2={width - pad.right}
@@ -280,6 +282,7 @@ export function TrendChart({
               height={innerH}
               fill="transparent"
               tabIndex={0}
+              role="img"
               aria-label={`${label(point)}: ${value(point)}`}
               onMouseEnter={() => {
                 setActive(index);

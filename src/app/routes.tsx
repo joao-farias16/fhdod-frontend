@@ -20,6 +20,15 @@ function admin(pick: (module: AdminArea) => ComponentType) {
 /** Rotas da aplicação. As telas TL01–TL17 são adicionadas nas etapas correspondentes. */
 export const routes: RouteObject[] = [
   {
+    // ET10: TV Wall (TL15). Pública, fora do layout comum (sem cabeçalho com links, menu ou
+    // rodapé administrativo, RF72), em pedaço próprio e sem o cliente de autenticação.
+    path: 'tv',
+    lazy: async () => ({
+      Component: (await import('../features/tv-wall/TvWallPage')).TvWallPage,
+    }),
+    hydrateFallbackElement: <Loading label="Carregando a TV Wall…" />,
+  },
+  {
     element: <AppLayout />,
     children: [
       { index: true, element: <HomePage /> },
@@ -29,6 +38,7 @@ export const routes: RouteObject[] = [
         lazy: async () => ({
           Component: (await import('../features/public-survey/PublicSurveyPage')).PublicSurveyPage,
         }),
+        hydrateFallbackElement: <Loading label="Carregando a pesquisa…" />,
       },
       { path: '*', element: <NotFoundPage /> },
     ],

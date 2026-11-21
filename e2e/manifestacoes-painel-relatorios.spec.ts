@@ -4,6 +4,7 @@
  *   nota 10 sem oferta em destaque.
  * T09 — manifestação com contato (só e-mail) e aceite da finalidade.
  * T18/T19 — Ouvidoria: lista, detalhe, mudança de status, nota interna, contato auditado e eliminação.
+ * T41 — manifestação com <script>, onerror e aspas SQL: aceita e exibida literalmente na Ouvidoria.
  * T11 — painel com uma resposta nova: Atualizar → total + 1 com n visível.
  * T20 — exportação do painel baixa um .xlsx com o nome padronizado.
  */
@@ -95,6 +96,28 @@ test('T09 — contato só com e-mail e aceite; formulário sem rolagem horizonta
   contactProtocol = (await page.getByText(/^FHD-\d{4}-\d{6}$/).textContent()) ?? '';
 });
 
+/** T41: marcação HTML/JS e aspas de SQL na manifestação (verificada no T18, como Ouvidoria). */
+const XSS_DESCRIPTION = `<script>window.__xss = 1</script><img src=x onerror="window.__xss = 2"> ' OR 1=1 --`;
+let xssProtocol = '';
+
+test('T41 — manifestação com <script> e aspas SQL é aceita pela pesquisa pública', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'computador-1440', 'Grava dados: roda uma vez.');
+  await evaluate(page, '1');
+  await manifest(page, 'Reclamação', XSS_DESCRIPTION);
+  await page
+    .getByRole('form', { name: 'Registrar manifestação' })
+    .getByRole('button', { name: /Enviar manifestação/ })
+    .click();
+  await expect(page.getByRole('heading', { name: 'Manifestação registrada' })).toBeVisible();
+  xssProtocol = (await page.getByText(/^FHD-\d{4}-\d{6}$/).textContent()) ?? '';
+  expect(xssProtocol).toMatch(/^FHD-\d{4}-\d{6}$/);
+  expect(
+    await page.evaluate(() => (window as unknown as { __xss?: number }).__xss),
+  ).toBeUndefined();
+});
+
 test('T18/T19 — Ouvidoria: status, nota, contato auditado e eliminação', async ({
   page,
 }, testInfo) => {
@@ -134,6 +157,15 @@ test('T18/T19 — Ouvidoria: status, nota, contato auditado e eliminação', asy
   await dialog.getByRole('button', { name: 'Eliminar contato' }).click();
   await expect(page.getByText('Os dados de contato foram eliminados.')).toBeVisible();
   await expect(page.getByText(/Dados de contato eliminados \(Retorno concluído\)/)).toBeVisible();
+
+  // T41: o texto aparece literalmente (como texto, não como HTML) e nada é executado.
+  await page.getByRole('link', { name: 'Voltar para a lista' }).click();
+  await table.getByRole('link', { name: xssProtocol }).click();
+  await expect(page.getByText(XSS_DESCRIPTION, { exact: true })).toBeVisible();
+  await expect(page.locator('main script, main img[src="x"]')).toHaveCount(0);
+  expect(
+    await page.evaluate(() => (window as unknown as { __xss?: number }).__xss),
+  ).toBeUndefined();
   await logout(page);
 });
 

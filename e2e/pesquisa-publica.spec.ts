@@ -120,11 +120,14 @@ test('T28 — concluir apaga os dados; Voltar não mostra respostas', async ({ p
 
   await page.goBack();
   await page.goForward();
-  await expect(page.getByRole('heading', { name: NPS })).toBeVisible();
-  await expect(page.getByRole('radio', { name: '10', exact: true })).toHaveAttribute(
-    'aria-checked',
-    'false',
-  );
+  // O Chrome recarrega a página (pesquisa do início); o Firefox restaura do bfcache a própria
+  // confirmação. Nos dois casos nenhuma resposta aparece nem fica guardada (RF39).
+  await expect(
+    page
+      .getByRole('heading', { name: NPS })
+      .or(page.getByRole('heading', { name: 'Resposta enviada' })),
+  ).toBeVisible();
+  await expect(page.locator('[role="radio"][aria-checked="true"]')).toHaveCount(0);
   expect(await fhdodKeys(page)).toEqual([]);
 });
 
@@ -134,7 +137,11 @@ test('T28 — 3 min + 60 s sem uso apagam as respostas', async ({ page }) => {
   await page.getByRole('radio', { name: '6', exact: true }).click();
   expect(await fhdodKeys(page)).toHaveLength(1);
   await page.clock.fastForward('03:00');
-  await expect(page.getByRole('dialog', { name: 'Você ainda está aí?' })).toBeVisible();
+  const dialog = page.getByRole('dialog', { name: 'Você ainda está aí?' });
+  await expect(dialog).toBeVisible();
+  // A contagem de 60 s começou (o efeito que a agenda já rodou: no WebKit ele pode rodar depois
+  // de o aviso aparecer); só então avança o minuto.
+  await expect(dialog).toContainText(/apagadas em 5\d segundos/);
   await page.clock.fastForward('01:00');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.getByText('Por segurança, as respostas foram apagadas')).toBeVisible();
