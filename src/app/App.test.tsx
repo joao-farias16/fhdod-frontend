@@ -52,6 +52,19 @@ describe('página inicial', () => {
     expect(await screen.findByText('API disponível')).toBeInTheDocument();
   });
 
+  it('oferece somente o acesso ao login', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(healthResponse()));
+
+    renderAt('/');
+
+    expect(screen.getByRole('link', { name: 'Entrar no sistema' })).toHaveAttribute(
+      'href',
+      '/login',
+    );
+    expect(screen.queryByRole('link', { name: 'Acessar TV Wall' })).not.toBeInTheDocument();
+    expect(await screen.findByText('API disponível')).toBeInTheDocument();
+  });
+
   it('mostra o estado de conexão e o horário da verificação no fuso local', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(healthResponse()));
 

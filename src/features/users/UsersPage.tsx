@@ -1,4 +1,4 @@
-import { KeyRound, Pencil, Power, PowerOff, UserPlus } from 'lucide-react';
+import { Eraser, KeyRound, Pencil, Power, PowerOff, Search, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router';
@@ -7,7 +7,20 @@ import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { SelectField, TextField } from '../../components/ui/Field';
+import { FilterPanel, PageContainer, PageHeader } from '../../components/ui/Page';
 import { EmptyState, ErrorState, Loading, Pagination } from '../../components/ui/States';
+import {
+  STACK_TABLE_CLASS,
+  TABLE_CLASS,
+  TableContainer,
+  TBODY_CLASS,
+  TD_ACTIONS_CLASS,
+  TD_CLASS,
+  TH_CLASS,
+  THEAD_CLASS,
+  TR_CLASS,
+} from '../../components/ui/Table';
+import { Tag } from '../../components/ui/Tag';
 import { failureOf } from '../../lib/errors';
 import { formatDateTime } from '../../lib/format';
 import { noticeOf } from '../../lib/route-state';
@@ -125,37 +138,54 @@ export function UsersPage() {
   const meta = users.data?.meta;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Gestão de usuários</h1>
-          <p className="text-slate-700">
-            Contas administrativas, perfis, escopo de setores e senhas temporárias.
-          </p>
-        </div>
-        <Button
-          onClick={() => {
-            setSuccess(null);
-            setPending({ kind: 'create' });
-          }}
-        >
-          <UserPlus aria-hidden="true" className="size-5" />
-          Novo usuário
-        </Button>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Gestão de usuários"
+        description="Contas administrativas, perfis, escopo de setores e senhas temporárias."
+        actions={
+          <Button
+            onClick={() => {
+              setSuccess(null);
+              setPending({ kind: 'create' });
+            }}
+          >
+            <UserPlus aria-hidden="true" className="size-5" />
+            Novo usuário
+          </Button>
+        }
+      />
 
       {success === null ? null : <Alert tone="success">{success}</Alert>}
 
-      <form
-        role="search"
-        aria-label="Filtros de usuários"
-        noValidate
+      <FilterPanel
+        label="Filtros de usuários"
+        columns={5}
         onSubmit={(event) => void applyFilters(event)}
-        className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-5"
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                filterForm.reset(INITIAL_FILTERS);
+                setFilters(INITIAL_FILTERS);
+              }}
+            >
+              <Eraser aria-hidden="true" className="size-4" />
+              Limpar
+            </Button>
+            <Button type="submit">
+              <Search aria-hidden="true" className="size-4" />
+              Filtrar
+            </Button>
+          </>
+        }
       >
         <TextField
           label="Buscar por nome ou e-mail"
+          type="search"
+          placeholder="Digite parte do nome ou do e-mail"
           maxLength={120}
+          fieldClassName="sm:col-span-2"
           {...filterForm.register('search')}
         />
         <SelectField label="Perfil" {...filterForm.register('role')}>
@@ -171,7 +201,11 @@ export function UsersPage() {
           <option value="true">Ativos</option>
           <option value="false">Desativados</option>
         </SelectField>
-        <SelectField label="Setor" {...filterForm.register('sectorId')}>
+        <SelectField
+          label="Setor"
+          fieldClassName="sm:col-span-2 lg:col-span-1"
+          {...filterForm.register('sectorId')}
+        >
           <option value="">Todos</option>
           {(sectors.data ?? []).map((sector) => (
             <option key={sector.id} value={sector.id}>
@@ -179,19 +213,7 @@ export function UsersPage() {
             </option>
           ))}
         </SelectField>
-        <div className="flex items-end gap-2">
-          <Button type="submit">Filtrar</Button>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              filterForm.reset(INITIAL_FILTERS);
-              setFilters(INITIAL_FILTERS);
-            }}
-          >
-            Limpar
-          </Button>
-        </div>
-      </form>
+      </FilterPanel>
 
       <section aria-labelledby="lista-usuarios" className="space-y-4">
         <h2 id="lista-usuarios" className="sr-only">
@@ -206,63 +228,65 @@ export function UsersPage() {
             <p>Ajuste os filtros ou cadastre um novo usuário.</p>
           </EmptyState>
         ) : (
-          <div
-            className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm"
-            tabIndex={0}
-            role="region"
-            aria-label="Tabela de usuários"
-          >
-            <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="bg-slate-100 text-slate-800">
+          <TableContainer label="Tabela de usuários">
+            <table className={`${TABLE_CLASS} ${STACK_TABLE_CLASS} min-w-[960px]`}>
+              <thead className={THEAD_CLASS}>
                 <tr>
-                  <th scope="col" className="px-4 py-3">
+                  <th scope="col" className={TH_CLASS}>
                     Nome
                   </th>
-                  <th scope="col" className="px-4 py-3">
+                  <th scope="col" className={TH_CLASS}>
                     Perfil
                   </th>
-                  <th scope="col" className="px-4 py-3">
+                  <th scope="col" className={TH_CLASS}>
                     Escopo
                   </th>
-                  <th scope="col" className="px-4 py-3">
+                  <th scope="col" className={TH_CLASS}>
                     Situação
                   </th>
-                  <th scope="col" className="px-4 py-3">
+                  <th scope="col" className={`${TH_CLASS} text-right`}>
                     Ações
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className={TBODY_CLASS}>
                 {list.map((user) => {
                   const isSelf = user.id === me.id;
                   return (
-                    <tr key={user.id} className="align-top">
-                      <td className="px-4 py-3">
-                        <span className="block font-medium text-slate-900">
+                    <tr key={user.id} className={TR_CLASS}>
+                      <td className={`${TD_CLASS} min-w-56`}>
+                        <span className="block font-semibold text-slate-900">
                           {user.fullName}
                           {isSelf ? ' (você)' : ''}
                         </span>
-                        <span className="text-slate-700">{user.email}</span>
+                        <span className="block break-all text-slate-600">{user.email}</span>
                       </td>
-                      <td className="px-4 py-3">{ROLE_LABELS[user.role]}</td>
-                      <td className="px-4 py-3">{scopeText(user)}</td>
-                      <td className="px-4 py-3">
-                        <span className="block font-medium">
-                          {user.isActive ? 'Ativo' : 'Desativado'}
-                        </span>
-                        {user.deactivatedAt === null ? null : (
-                          <span className="block text-slate-700">
-                            desde {formatDateTime(user.deactivatedAt)}
-                          </span>
-                        )}
-                        {user.mustChangePassword ? (
-                          <span className="block text-slate-700">Troca de senha pendente</span>
-                        ) : null}
+                      <td className={`${TD_CLASS} whitespace-nowrap`} data-label="Perfil">
+                        {ROLE_LABELS[user.role]}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-2">
+                      <td className={`${TD_CLASS} max-w-64 text-slate-700`} data-label="Escopo">
+                        {scopeText(user)}
+                      </td>
+                      <td className={TD_CLASS} data-label="Situação">
+                        <div className="flex flex-col items-start gap-1">
+                          <Tag tone={user.isActive ? 'success' : 'neutral'}>
+                            {user.isActive ? 'Ativo' : 'Desativado'}
+                          </Tag>
+                          {user.deactivatedAt === null ? null : (
+                            <span className="text-xs text-slate-600">
+                              desde {formatDateTime(user.deactivatedAt)}
+                            </span>
+                          )}
+                          {user.mustChangePassword ? (
+                            <Tag tone="info">Troca de senha pendente</Tag>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className={TD_ACTIONS_CLASS} data-actions="">
+                        <div className="inline-flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
+                            className="px-3"
                             aria-label={`Editar ${user.fullName}`}
                             onClick={() => {
                               setSuccess(null);
@@ -276,6 +300,7 @@ export function UsersPage() {
                             <>
                               <Button
                                 variant="ghost"
+                                className="px-3"
                                 aria-label={`Redefinir senha de ${user.fullName}`}
                                 disabled={!user.isActive}
                                 title={
@@ -293,6 +318,7 @@ export function UsersPage() {
                               </Button>
                               <Button
                                 variant="ghost"
+                                className={`px-3 ${user.isActive ? 'text-danger-700 hover:bg-red-50 hover:text-danger-800' : ''}`}
                                 aria-label={`${user.isActive ? 'Desativar' : 'Reativar'} ${user.fullName}`}
                                 onClick={() => {
                                   setSuccess(null);
@@ -315,7 +341,7 @@ export function UsersPage() {
                 })}
               </tbody>
             </table>
-          </div>
+          </TableContainer>
         )}
         {meta === undefined || list.length === 0 ? null : (
           <Pagination
@@ -387,6 +413,6 @@ export function UsersPage() {
           setTemporary(null);
         }}
       />
-    </div>
+    </PageContainer>
   );
 }

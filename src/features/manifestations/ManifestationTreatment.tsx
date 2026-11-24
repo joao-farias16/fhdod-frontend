@@ -3,7 +3,7 @@ import { useId, useState } from 'react';
 
 import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
-import { SelectField } from '../../components/ui/Field';
+import { SelectField, TEXTAREA_CLASS } from '../../components/ui/Field';
 import { ApiError } from '../../lib/api-client';
 import { failureOf, SAVE_FAILED } from '../../lib/errors';
 import {
@@ -21,8 +21,8 @@ import {
 const ACTIONS_MIN = 10;
 const TEXT_MAX = 2000;
 
-const TEXTAREA =
-  'block w-full rounded-lg border border-neutral-border bg-white p-3 text-base aria-invalid:border-danger-700';
+/** Mesmo visual dos demais campos (components/ui/Field). */
+const TEXTAREA = TEXTAREA_CLASS;
 
 /** Formulário de tratamento: status (RN23), prioridade, providências e nota ao arquivar (RF46). */
 export function TreatmentForm({

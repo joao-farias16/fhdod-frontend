@@ -89,7 +89,7 @@ afterEach(() => {
 });
 
 describe('TL15 — conteúdo e isolamento (T29, RF68, RF72)', () => {
-  it('pela rota /tv da aplicação: exibe os agregados do E42, sem menu, links ou sessão', async () => {
+  it('pela rota /tv da aplicação: exibe os agregados do E42, sem menu ou sessão', async () => {
     const { calls } = mockApi({ [SUMMARY]: () => json({ data: summary() }) });
     const { container } = renderApp('/tv', new FakeAuthClient());
 
@@ -112,8 +112,14 @@ describe('TL15 — conteúdo e isolamento (T29, RF68, RF72)', () => {
     // Convite institucional (TL15).
     expect(screen.getByText('Sua opinião melhora o nosso atendimento.')).toBeInTheDocument();
 
-    // RF72: nenhum link, menu, botão ou formulário; nada da área administrativa.
-    expect(container.querySelectorAll('a, nav, button, form, input')).toHaveLength(0);
+    // RF72: nenhum menu, botão ou formulário; o único link é o retorno à página principal.
+    expect(container.querySelectorAll('nav, button, form, input')).toHaveLength(0);
+    const links = container.querySelectorAll('a');
+    expect(links).toHaveLength(1);
+    expect(screen.getByRole('link', { name: 'Voltar à página principal' })).toHaveAttribute(
+      'href',
+      '/painel',
+    );
     expect(screen.queryByText(/Sair|Entrar|Painel|Ouvidoria|Usuários/)).not.toBeInTheDocument();
 
     // Somente o E42, sem token, com o período padrão.

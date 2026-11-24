@@ -82,7 +82,7 @@ function QuestionDialog({
               </option>
             ))}
         </SelectField>
-        <div className="flex flex-wrap justify-end gap-3 pt-2">
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>

@@ -2,6 +2,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 
 import { Alert } from '../../components/ui/Alert';
+import { PageContainer, PageHeader } from '../../components/ui/Page';
 import { ErrorState, Loading } from '../../components/ui/States';
 import { ApiError } from '../../lib/api-client';
 import { formatDateTime } from '../../lib/format';
@@ -60,12 +61,15 @@ export function ManifestationDetailPage() {
     const detail = query.data;
     content = (
       <div className="space-y-6">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight">Manifestação {detail.protocol}</h1>
-          <p className="text-slate-700">
-            {TYPE_LABELS[detail.type]} · {detail.sector.name} · recebida em{' '}
-            {formatDateTime(detail.receivedAt)}
-          </p>
+        <PageHeader
+          title={`Manifestação ${detail.protocol}`}
+          description={
+            <>
+              {TYPE_LABELS[detail.type]} · {detail.sector.name} · recebida em{' '}
+              {formatDateTime(detail.receivedAt)}
+            </>
+          }
+        >
           <p className="text-slate-700">
             Status: <strong>{STATUS_LABELS[detail.status]}</strong> · Prioridade:{' '}
             <strong>{PRIORITY_LABELS[detail.priority]}</strong>
@@ -73,15 +77,15 @@ export function ManifestationDetailPage() {
               ? null
               : ` · concluída em ${formatDateTime(detail.resolvedAt)}`}
           </p>
-        </div>
+        </PageHeader>
 
         <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
           <div className="space-y-6">
             <section
               aria-labelledby="texto-titulo"
-              className="space-y-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="space-y-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
             >
-              <h2 id="texto-titulo" className="text-lg font-semibold">
+              <h2 id="texto-titulo" className="text-lg font-semibold text-slate-900">
                 Relato
               </h2>
               <p className="break-words whitespace-pre-wrap">{detail.description}</p>
@@ -93,9 +97,9 @@ export function ManifestationDetailPage() {
             />
             <section
               aria-labelledby="linha-titulo"
-              className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
             >
-              <h2 id="linha-titulo" className="text-lg font-semibold">
+              <h2 id="linha-titulo" className="text-lg font-semibold text-slate-900">
                 Linha do tempo
               </h2>
               <ol className="space-y-3 border-l-2 border-slate-200 pl-4">
@@ -115,9 +119,9 @@ export function ManifestationDetailPage() {
           <div className="space-y-6">
             <section
               aria-labelledby="resposta-titulo"
-              className="space-y-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+              className="space-y-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
             >
-              <h2 id="resposta-titulo" className="text-lg font-semibold">
+              <h2 id="resposta-titulo" className="text-lg font-semibold text-slate-900">
                 Avaliação vinculada
               </h2>
               <p>
@@ -150,15 +154,15 @@ export function ManifestationDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
+    <PageContainer>
       <Link
         to="/ouvidoria/manifestacoes"
-        className="inline-flex min-h-11 items-center gap-2 font-medium text-brand-700"
+        className="-my-2 inline-flex min-h-11 items-center gap-2 rounded-md font-medium text-brand-700 hover:text-brand-800 hover:underline"
       >
         <ArrowLeft aria-hidden="true" className="size-4" />
         Voltar para a lista
       </Link>
       {content}
-    </div>
+    </PageContainer>
   );
 }

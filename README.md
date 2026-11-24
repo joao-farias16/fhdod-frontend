@@ -1,10 +1,10 @@
 # FHDOD — Interface web (frontend)
 
-Interface web do **FHDOD — Sistema de Gestão da Experiência do Paciente** (Fundação Hospitalar Dr. Oswaldo Diesel): pesquisa pública por QR Code ou link, manifestação, área administrativa (usuários, auditoria, setores, escalas, pesquisas), Ouvidoria, painéis com NPS, relatórios Excel e a **TV Wall** pública em `/tv` (veja [Situação das funcionalidades](#situação-das-funcionalidades), o [inventário de telas](docs/inventario-de-telas.md) e [`docs/tv-wall.md`](docs/tv-wall.md)).
+Interface web do **FHDOD — Sistema de Gestão da Experiência do Paciente** (Fundação Hospitalar Dr. Oswaldo Diesel): pesquisa pública por QR Code ou link, manifestação, área administrativa (usuários, auditoria, setores, escalas, pesquisas), Ouvidoria, painéis com NPS, relatórios Excel e a **TV Wall** pública em `/tv` (veja [Situação das funcionalidades](#situação-das-funcionalidades) e a [documentação complementar](#documentação-complementar)).
 
 - **Aplicação publicada:** <https://fhdod-frontend.vercel.app> (Vercel)
 - **API usada pela publicação:** `https://fhdod-experiencia-paciente.onrender.com` (endereço público, incluído no build por `VITE_API_URL`)
-- **Identidade visual:** branco e vermelho, da Fundação Hospitalar Dr. Oswaldo Diesel (veja [Identidade visual](#identidade-visual)).
+- **Identidade visual:** branco e vermelho, com o logotipo oficial da Fundação Hospitalar Dr. Oswaldo Diesel (veja [Identidade visual](#identidade-visual)).
 - **Design (Figma):** [sistema-hospital](https://www.figma.com/design/kcRMvRhHs8IYRfsZkv1BLZ/sistema-hospital), atualizado pelo plugin próprio em [`figma-plugin/`](figma-plugin/README.md).
 
 Este é um **repositório independente**, separado do repositório da API. Ele tem as próprias dependências, lockfile, configurações (TypeScript, Vite, Vitest, ESLint, Prettier, Playwright) e variáveis de ambiente. A comunicação com a API REST do FHDOD acontece **somente por HTTP** (endpoints `/api/v1`), no endereço configurado em `VITE_API_URL`; o frontend não importa código da API.
@@ -31,10 +31,13 @@ Este é um **repositório independente**, separado do repositório da API. Ele t
 fhdod-frontend/                  raiz do repositório
 ├── src/
 │   ├── main.tsx                 ponto de entrada (React Router + TanStack Query)
-│   ├── app/                     rotas (routes.tsx), layouts público e administrativo, AdminArea
-│   │                            (telas administrativas e proteção por permissão), 404, query-client
-│   ├── components/ui/           componentes reutilizáveis (botão, campos, diálogos, alerta,
-│   │                            estados de carregamento/erro/vazio, etiqueta)
+│   ├── app/                     rotas (routes.tsx), layouts público (AppLayout) e administrativo
+│   │                            (AdminLayout), AdminArea (telas administrativas e proteção por
+│   │                            permissão), página 404, query-client
+│   ├── components/ui/           componentes compartilhados: Button/button-classes, Field (texto,
+│   │                            área de texto, seleção, caixa de marcação), Page (contêiner,
+│   │                            cabeçalho de página, cartão, painel de filtros), Table, States
+│   │                            (carregando/erro/vazio/paginação), Alert, Dialog, ConfirmDialog, Tag
 │   ├── features/<domínio>/      páginas, componentes da área e <domínio>-api.ts (tipos e hooks)
 │   │   ├── auth/                login, sessão (AuthProvider, auth-client), guardas de rota, troca de senha
 │   │   ├── home/                página inicial e situação da API
@@ -50,14 +53,16 @@ fhdod-frontend/                  raiz do repositório
 │   │   └── audit/               auditoria
 │   ├── lib/                     env (variáveis VITE_*), api-client (cliente HTTP único),
 │   │                            formatação pt-BR, erros de formulário e estado de navegação
-│   ├── styles/                  Tailwind e tokens visuais
+│   ├── styles/                  index.css: Tailwind, tokens visuais, seleção personalizada e
+│   │                            tabelas empilhadas no celular
 │   └── test/                    setup do Vitest e helpers dos testes de componentes
 ├── e2e/                         testes ponta a ponta (Playwright) e environment.ts (portas e pastas)
 ├── figma-plugin/                plugin do Figma Desktop que atualiza o arquivo de design para a
 │                                identidade branco e vermelho e cria as telas ausentes (README próprio)
-├── docs/                        inventario-de-telas.md (rotas, telas, estados e APIs), tv-wall.md (TL15)
-│                                e relatorios/ (relatórios técnicos das etapas)
-├── public/                      arquivos estáticos
+├── docs/                        inventario-de-telas.md (rotas, telas, estados e APIs),
+│                                componentes-e-responsividade.md, tv-wall.md (TL15) e
+│                                relatorios/ (relatórios técnicos das etapas)
+├── public/                      favicon.svg e images/logo-fhdod-oficial.png (logotipo oficial)
 ├── index.html
 ├── package.json · package-lock.json
 ├── tsconfig.json · tsconfig.base.json · tsconfig.app.json · tsconfig.node.json
@@ -78,6 +83,8 @@ fhdod-frontend/                  raiz do repositório
 - **HTTP:** todas as chamadas passam por `src/lib/api-client.ts` (`apiRequest`, `apiGet`, `apiDownload`). As rotas administrativas usam o `request` do `AuthProvider`, que injeta o token e renova a sessão quando preciso.
 - **Erros:** respostas fora do sucesso viram `ApiError` com `status`, `code`, `message`, `requestId` e `details` (formato `{ error: { code, message, details, requestId } }` da API). Falha de rede vira `NETWORK_ERROR`; corpo inesperado vira `UNEXPECTED_RESPONSE`. `src/lib/errors.ts` leva os erros de validação (400 com `details`) e de conflito (409) aos campos do formulário e mostra o `requestId` nos avisos gerais.
 - **Permissões:** o menu e as telas são filtrados pelas permissões devolvidas em `GET /api/v1/me` (`RequirePermission`); o controle de acesso real é sempre do backend.
+- **Componentes compartilhados:** as telas administrativas usam a mesma estrutura (`PageContainer`, `PageHeader`, `Card`, `FilterPanel`), os mesmos campos e botões e o mesmo estilo de tabela; as listagens de Manifestações, Usuários, Auditoria e Setores viram cartões abaixo de 768 px. Detalhes em [`docs/componentes-e-responsividade.md`](docs/componentes-e-responsividade.md).
+- **Layouts:** `AppLayout` (público), `AdminLayout` (barra vermelha com logotipo, usuário, "Trocar senha" e "Sair" + barra de navegação por permissão; abaixo de 1024 px o botão "Menu"), login e TV Wall com estrutura própria.
 - **Formulários:** React Hook Form. **Estilo:** Tailwind CSS 4. **Ícones:** Lucide. **QR Code:** qrcode.react.
 
 ## Identidade visual
@@ -102,6 +109,7 @@ Regras adotadas:
 - **Informação continua azul:** com a marca vermelha, um aviso informativo vermelho pareceria erro.
 - **Sucesso** (verde) e **aviso** (âmbar) não mudaram.
 - **Foco:** contorno de 2 px vermelho; dentro do cabeçalho vermelho, branco (RNF07).
+- **Logotipo:** a logo oficial (`public/images/logo-fhdod-oficial.png`, texto alternativo "FHDOD") aparece no cabeçalho público, no login, no cabeçalho administrativo e na TV Wall; os ícones de coração provisórios foram removidos.
 - Também mudaram o `favicon.svg` e a `theme-color` do `index.html`.
 - **Pendente:** a cor exata do manual da instituição não foi encontrada em fonte pública; `#c8102e` deve ser confirmado com a FHDOD. Para trocar, altere os tokens em `src/styles/index.css` (e `VARIABLE_TARGETS` no plugin do Figma).
 
@@ -109,52 +117,65 @@ Regras adotadas:
 
 O detalhamento de cada tela (componentes, ações, estados, diálogos e endpoints) está em [`docs/inventario-de-telas.md`](docs/inventario-de-telas.md).
 
-| Rota                                | Tela                                                   | Acesso                           |
-| ----------------------------------- | ------------------------------------------------------ | -------------------------------- |
-| `/`                                 | página inicial com a situação da API (`GET /health`)   | público                          |
-| `/p/:slug` (`?origem=qr` ou `link`) | pesquisa pública de satisfação e manifestação          | público, sem login e sem cookies |
-| `/tv` (`?periodo=7d`, `30d`, `90d`) | TV Wall (TL15): indicadores agregados, sem menu/links  | público, sem login e sem cookies |
-| `/login`                            | login administrativo                                   | público                          |
-| `/trocar-senha`                     | troca de senha (obrigatória no primeiro acesso)        | sessão                           |
-| `/painel`                           | dashboard geral                                        | `dashboard:read`                 |
-| `/painel/setores/:sectorId`         | dashboard por setor                                    | `dashboard:read`                 |
-| `/ouvidoria/manifestacoes`          | lista de manifestações                                 | `manifestations:read`            |
-| `/ouvidoria/manifestacoes/:id`      | detalhe e tratamento da manifestação                   | `manifestations:read`            |
-| `/relatorios`                       | exportação de relatórios Excel                         | alguma permissão `reports:*`     |
-| `/admin/usuarios`                   | usuários                                               | `users:read`                     |
-| `/admin/auditoria`                  | auditoria                                              | `audit_logs:read`                |
-| `/admin/setores`                    | setores e equipes (criar setor exige `sectors:create`) | `teams:create`                   |
-| `/admin/turnos`                     | escala e turnos                                        | `shifts:read`                    |
-| `/admin/escalas/importar`           | importação de escalas (CSV)                            | `rosters:import`                 |
-| `/admin/pesquisas`                  | lista de pesquisas                                     | `surveys:read`                   |
-| `/admin/pesquisas/:id`              | edição de pesquisa (dados, perguntas, publicação, QR)  | `surveys:update`                 |
-| `/admin/pesquisas/:id/cartaz`       | cartaz A4 com QR Code, sem o layout administrativo     | `surveys:read`                   |
-| qualquer outra                      | página 404                                             | público                          |
+| Rota                                | Tela                                                                                       | Acesso                           |
+| ----------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------- |
+| `/`                                 | página inicial: botão "Entrar no sistema" e situação da API (`GET /health`)                | público                          |
+| `/p/:slug` (`?origem=qr` ou `link`) | pesquisa pública de satisfação e manifestação                                              | público, sem login e sem cookies |
+| `/tv` (`?periodo=7d`, `30d`, `90d`) | TV Wall (TL15): indicadores agregados; único link: "Voltar à página principal" (`/painel`) | público, sem login e sem cookies |
+| `/login`                            | login administrativo                                                                       | público                          |
+| `/trocar-senha`                     | troca de senha (obrigatória no primeiro acesso)                                            | sessão                           |
+| `/painel`                           | dashboard geral                                                                            | `dashboard:read`                 |
+| `/painel/setores/:sectorId`         | dashboard por setor                                                                        | `dashboard:read`                 |
+| `/ouvidoria/manifestacoes`          | lista de manifestações                                                                     | `manifestations:read`            |
+| `/ouvidoria/manifestacoes/:id`      | detalhe e tratamento da manifestação                                                       | `manifestations:read`            |
+| `/relatorios`                       | exportação de relatórios Excel                                                             | alguma permissão `reports:*`     |
+| `/admin/usuarios`                   | usuários                                                                                   | `users:read`                     |
+| `/admin/auditoria`                  | auditoria                                                                                  | `audit_logs:read`                |
+| `/admin/setores`                    | setores e equipes (criar setor exige `sectors:create`)                                     | `teams:create`                   |
+| `/admin/turnos`                     | escala e turnos                                                                            | `shifts:read`                    |
+| `/admin/escalas/importar`           | importação de escalas (CSV)                                                                | `rosters:import`                 |
+| `/admin/pesquisas`                  | lista de pesquisas                                                                         | `surveys:read`                   |
+| `/admin/pesquisas/:id`              | edição de pesquisa (dados, perguntas, publicação, QR)                                      | `surveys:update`                 |
+| `/admin/pesquisas/:id/cartaz`       | cartaz A4 com QR Code, sem o layout administrativo                                         | `surveys:read`                   |
+| qualquer outra                      | página 404                                                                                 | público                          |
 
 Depois do login, o Superadministrador vai para `/admin/usuarios`; os demais perfis vão para `/painel`. Perfis: Superadministrador, Administrador de setor, Gestão, Ouvidoria e Visualizador (`src/features/auth/auth-types.ts`).
 
-A TV Wall fica fora dos layouts do sistema (sem cabeçalho com links, menu ou rodapé administrativo), em pedaço de JavaScript próprio e sem o cliente de autenticação. Detalhes em [`docs/tv-wall.md`](docs/tv-wall.md).
+A TV Wall fica fora dos layouts do sistema (sem menu, sem cabeçalho institucional e sem rodapé administrativo), em pedaço de JavaScript próprio e sem o cliente de autenticação. **RF72 (atualizada):** o único link permitido na tela é "Voltar à página principal", com destino `/painel`; qualquer outro link, menu, botão ou campo é proibido. O menu administrativo tem o item "TV Wall" (`/tv`), e a página inicial não tem link para a TV. Detalhes em [`docs/tv-wall.md`](docs/tv-wall.md).
 
 ## Situação das funcionalidades
 
-Levantamento feito pelo código e pelos testes automatizados (revisado em 21/11/2026) e, na primeira versão, por acesso à aplicação publicada (novembro de 2026). "Implementada" significa que a tela chama os endpoints reais da API e tem testes de componentes e/ou E2E; as rotas administrativas da publicação não foram exercitadas com login.
+Levantamento feito pelo código e pelos testes automatizados (revisado em 24/11/2026, incluindo as alterações visuais ainda não commitadas) e, na primeira versão, por acesso à aplicação publicada (novembro de 2026). "Implementada" significa que a tela chama os endpoints reais da API e tem testes de componentes e/ou E2E; as rotas administrativas da publicação não foram exercitadas com login.
 
-| Funcionalidade                 | Situação            | O que existe                                                                                                                                                                                                                                                                                                          |
-| ------------------------------ | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pesquisa pública de satisfação | Implementada        | `GET /public/surveys/:slug`, nota 0–10 e perguntas por etapa (1–5), envio com `Idempotency-Key` (`POST /public/responses`), progresso no `sessionStorage`, aviso de inatividade (3 min + 60 s) que apaga as respostas, retorno ao início 30 s após a confirmação, mensagens para 404, 410 e 429.                      |
-| Manifestação pelo paciente     | Implementada        | formulário após a avaliação (`POST /public/manifestations`): tipo, descrição, anonimato por padrão, contato opcional com aceite, protocolo na confirmação.                                                                                                                                                            |
-| Autenticação                   | Implementada        | login, renovação, logout, troca de senha e troca obrigatória pela API (veja [Autenticação](#autenticação)).                                                                                                                                                                                                           |
-| Dashboard geral                | Implementado        | `/dashboard/summary`, `/sectors`, `/trends`: filtros na URL, cartões com n, distribuição 0–10, setores, tendência, comparação com o período anterior, atualização a cada 60 s com a aba visível, botões de exportação.                                                                                                |
-| Dashboard por setor            | Implementado        | `/dashboard/questions`, `/shifts`, `/teams`: perguntas por etapa da jornada, turnos, equipes e cobertura.                                                                                                                                                                                                             |
-| Ouvidoria                      | Implementada        | lista com filtros e paginação; detalhe com status, prioridade, providências, notas, linha do tempo; visualização de contato por ação explícita (auditada pela API) e eliminação do contato com motivo.                                                                                                                |
-| Relatórios                     | Implementados       | `GET /reports/export`: respostas, indicadores e manifestações em Excel (.xlsx), tipo conforme a permissão do perfil; limites informados pela API.                                                                                                                                                                     |
-| Usuários                       | Implementado        | lista, cadastro, edição, desativação e redefinição de senha com senha temporária.                                                                                                                                                                                                                                     |
-| Auditoria                      | Implementada        | `GET /admin/audit-logs` com filtros (até 366 dias) e paginação.                                                                                                                                                                                                                                                       |
-| Setores e equipes              | Implementados       | cadastro e edição de setores (Superadministrador) e de equipes (também o Administrador de setor, no próprio escopo).                                                                                                                                                                                                  |
-| Escalas e turnos               | Implementados       | escala por dia (intervalo de até 62 dias), cadastro e edição de turnos; importação de CSV com modelo para baixar, pré-validação (erros por linha, sem gravar) e confirmação.                                                                                                                                          |
-| Pesquisas, QR Code e cartaz    | Implementados       | criação, edição de dados e perguntas (por etapa da jornada), publicação de versão, link e QR Code (PNG e SVG) e cartaz A4 para impressão.                                                                                                                                                                             |
-| Página inicial                 | Implementada        | mostra a situação da API (`GET /health`) e o estado atual do sistema (texto atualizado na ET11). Não há link para o login (o acesso administrativo é feito digitando `/login`).                                                                                                                                       |
-| TV Wall                        | Implementada (ET10) | `/tv` consome só o E42 (`GET /tv-wall/summary`): NPS geral, n, % de promotores e detratores, tendência, até 8 setores e convite; atualização a cada 60 s, últimos dados com aviso em falha, recarga a cada 6 h; 1920 × 1080 sem rolagem, 160/64/32/24 px e contraste ≥ 7:1. Ver [`docs/tv-wall.md`](docs/tv-wall.md). |
+| Funcionalidade                 | Situação            | O que existe                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------ | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pesquisa pública de satisfação | Implementada        | `GET /public/surveys/:slug`, nota 0–10 e perguntas por etapa (1–5), envio com `Idempotency-Key` (`POST /public/responses`), progresso no `sessionStorage`, aviso de inatividade (3 min + 60 s) que apaga as respostas, retorno ao início 30 s após a confirmação, mensagens para 404, 410 e 429.                                                                                                           |
+| Manifestação pelo paciente     | Implementada        | formulário após a avaliação (`POST /public/manifestations`): tipo, descrição, anonimato por padrão, contato opcional com aceite, protocolo na confirmação.                                                                                                                                                                                                                                                 |
+| Autenticação                   | Implementada        | login, renovação, logout, troca de senha e troca obrigatória pela API (veja [Autenticação](#autenticação)).                                                                                                                                                                                                                                                                                                |
+| Dashboard geral                | Implementado        | `/dashboard/summary`, `/sectors`, `/trends`: filtros na URL, cartões com n, distribuição 0–10, setores, tendência, comparação com o período anterior, atualização a cada 60 s com a aba visível, botões de exportação.                                                                                                                                                                                     |
+| Dashboard por setor            | Implementado        | `/dashboard/questions`, `/shifts`, `/teams`: perguntas por etapa da jornada, turnos, equipes e cobertura.                                                                                                                                                                                                                                                                                                  |
+| Ouvidoria                      | Implementada        | lista com filtros e paginação; detalhe com status, prioridade, providências, notas, linha do tempo; visualização de contato por ação explícita (auditada pela API) e eliminação do contato com motivo.                                                                                                                                                                                                     |
+| Relatórios                     | Implementados       | `GET /reports/export`: respostas, indicadores e manifestações em Excel (.xlsx), tipo conforme a permissão do perfil; limites informados pela API.                                                                                                                                                                                                                                                          |
+| Usuários                       | Implementado        | lista, cadastro, edição, desativação e redefinição de senha com senha temporária.                                                                                                                                                                                                                                                                                                                          |
+| Auditoria                      | Implementada        | `GET /admin/audit-logs` com filtros (até 366 dias) e paginação.                                                                                                                                                                                                                                                                                                                                            |
+| Setores e equipes              | Implementados       | cadastro e edição de setores (Superadministrador) e de equipes (também o Administrador de setor, no próprio escopo).                                                                                                                                                                                                                                                                                       |
+| Escalas e turnos               | Implementados       | escala por dia (intervalo de até 62 dias), cadastro e edição de turnos; importação de CSV com modelo para baixar, pré-validação (erros por linha, sem gravar) e confirmação.                                                                                                                                                                                                                               |
+| Pesquisas, QR Code e cartaz    | Implementados       | criação, edição de dados e perguntas (por etapa da jornada), publicação de versão, link e QR Code (PNG e SVG) e cartaz A4 para impressão.                                                                                                                                                                                                                                                                  |
+| Página inicial                 | Implementada        | mostra a situação da API (`GET /health`), o estado atual do sistema e o botão "Entrar no sistema" (link para `/login`).                                                                                                                                                                                                                                                                                    |
+| TV Wall                        | Implementada (ET10) | `/tv` consome só o E42 (`GET /tv-wall/summary`): NPS geral, n, % de promotores e detratores, tendência, até 8 setores e convite; atualização a cada 60 s, últimos dados com aviso em falha, recarga a cada 6 h; 1920 × 1080 sem rolagem, 160/64/32/24 px e contraste ≥ 7:1. Visual com cartões, logotipo oficial e link "Voltar à página principal" (`/painel`). Ver [`docs/tv-wall.md`](docs/tv-wall.md). |
+
+## Documentação complementar
+
+| Documento                                                                            | Conteúdo                                                                                          |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| [`docs/inventario-de-telas.md`](docs/inventario-de-telas.md)                         | rotas, telas, componentes, ações, estados e endpoints de cada tela                                |
+| [`docs/componentes-e-responsividade.md`](docs/componentes-e-responsividade.md)       | componentes compartilhados, layouts, cabeçalho administrativo, tabelas em cartões, acessibilidade |
+| [`docs/tv-wall.md`](docs/tv-wall.md)                                                 | TV Wall (TL15, `/tv`): conteúdo, estados, atualização, legibilidade, RF72 e testes                |
+| [`docs/relatorios/`](docs/relatorios/2026-11-07-identidade-visual-vermelha-figma.md) | relatório datado (07/11/2026) da adoção da identidade vermelha; registro histórico                |
+| [`figma-plugin/README.md`](figma-plugin/README.md)                                   | plugin do Figma Desktop e seus testes                                                             |
+| [`.env.example`](.env.example)                                                       | variáveis de ambiente públicas e variáveis opcionais do terminal                                  |
+
+Documentos do repositório da API (fora deste repositório): contrato dos endpoints, `docs/tv-wall.md` (E42) e `docs/plano-e-relatorio-de-testes.md`.
 
 ## Instalação
 
@@ -175,6 +196,20 @@ Arquivo `.env` **nesta pasta** (copiado de `.env.example`). Tudo que começa com
 | `VITE_APP_ENV` | `development`, `test` ou `production`                                                                                                                                 |
 
 As variáveis são lidas e validadas em um único lugar, [`src/lib/env.ts`](src/lib/env.ts); todas as requisições à API passam pelo cliente HTTP de [`src/lib/api-client.ts`](src/lib/api-client.ts). Não há URLs da API espalhadas pelo código.
+
+### Variáveis lidas do terminal (opcionais)
+
+Não ficam no `.env` do frontend: são lidas pelo `vite.config.ts` e pelo `playwright.config.ts`.
+
+| Variável            | Padrão                    | Uso                                                                                            |
+| ------------------- | ------------------------- | ---------------------------------------------------------------------------------------------- |
+| `VITE_PORT`         | `5173`                    | porta do servidor de desenvolvimento (`strictPort`: falha se estiver ocupada)                  |
+| `VITE_PROXY_TARGET` | `http://localhost:3333`   | destino do proxy `/api` quando `VITE_API_URL` está vazia                                       |
+| `FHDOD_API_DIR`     | `..`                      | pasta do clone da API, usada pela E2E (veja [Testes ponta a ponta](#testes-ponta-a-ponta-e2e)) |
+| `E2E_EVIDENCE_DIR`  | `test-results/evidencias` | pasta das capturas da E2E                                                                      |
+| `TEST_DB_*`         | —                         | banco de teste repassado à API pela E2E (`TEST_DB_HOST/PORT/USER/PASSWORD/NAME`)               |
+
+A TV Wall usa somente `VITE_API_URL`; o hospital exibido é definido na API (`TV_WALL_HOSPITAL_SHORT_NAME`), nunca no frontend.
 
 ### URL da API
 
@@ -208,35 +243,45 @@ A página inicial mostra "API disponível" quando a comunicação com a API est�
 
 ## Testes e qualidade
 
-| Comando                            | O que faz                                                                           |
-| ---------------------------------- | ----------------------------------------------------------------------------------- |
-| `npm run check`                    | formatação, lint, typecheck, testes e build, em sequência                           |
-| `npm run typecheck`                | TypeScript (`tsc -b`: aplicação, configurações e E2E)                               |
-| `npm run lint`                     | ESLint sem avisos tolerados; `npm run lint:fix` corrige                             |
-| `npm run format:check`             | Prettier; `npm run format` corrige                                                  |
-| `npm test`                         | testes de componentes e unidade (Vitest + jsdom); não precisam da API nem do `.env` |
-| `npm run test:coverage`            | cobertura                                                                           |
-| `npm run test:e2e`                 | ponta a ponta com Playwright e API local, em duas invocações (veja abaixo)          |
-| `npm run test:e2e:chrome`          | E2E no Chrome instalado: 1440 px, 360 px e TV 1920 × 1080                           |
-| `npm run test:e2e:navegadores`     | E2E no Firefox (1440 px) e no WebKit (390 px) do Playwright                         |
-| `cd figma-plugin && npm run check` | plugin do Figma: tipos (`@figma/plugin-typings`) e testes com a API simulada        |
+| Comando                            | O que faz                                                                                                                       |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run check`                    | formatação, lint, typecheck, testes e build, em sequência                                                                       |
+| `npm run typecheck`                | TypeScript (`tsc -b`: aplicação, configurações e E2E)                                                                           |
+| `npm run lint`                     | ESLint sem avisos tolerados; `npm run lint:fix` corrige                                                                         |
+| `npm run format:check`             | Prettier; `npm run format` corrige                                                                                              |
+| `npm test`                         | testes de componentes e unidade (Vitest + jsdom); não precisam da API nem do `.env`; `npm run test:watch` roda em modo contínuo |
+| `npm run test:coverage`            | cobertura                                                                                                                       |
+| `npm run test:e2e`                 | ponta a ponta com Playwright e API local, em duas invocações (veja abaixo)                                                      |
+| `npm run build`                    | `tsc -b && vite build` (gera `dist/`); `npm run preview` serve o build em `http://localhost:4173`                               |
+| `npm run test:e2e:chrome`          | E2E no Chrome instalado: 1440 px, 360 px e TV 1920 × 1080                                                                       |
+| `npm run test:e2e:navegadores`     | E2E no Firefox (1440 px) e no WebKit (390 px) do Playwright                                                                     |
+| `cd figma-plugin && npm run check` | plugin do Figma: tipos (`@figma/plugin-typings`) e testes com a API simulada                                                    |
 
 Se o Vitest acusar `Timeout waiting for worker to respond` em máquina sobrecarregada, use `npx vitest run --maxWorkers=2`.
 
-Situação verificada em 05/11/2026: `npx vitest run --maxWorkers=2` → **18 arquivos, 119 testes, todos aprovados**. Os testes de componentes e unidade cobrem o cliente HTTP, as variáveis de ambiente, a formatação, a autenticação (cliente, fluxo e troca de senha), os componentes de interface, a pesquisa pública e a manifestação, o dashboard, a Ouvidoria, setores, escalas, pesquisas, usuários e auditoria. A E2E não foi executada nesta verificação (exige a API e o MySQL locais).
+### Resultados da última auditoria
 
-Situação verificada em 07/11/2026 (branch `feature/identidade-visual-vermelha-figma`, depois integrada à `develop` no commit `6375032`): lint, typecheck e build aprovados; `npx vitest run --maxWorkers=2` → 18 arquivos, 119 testes aprovados; plugin do Figma → tipos e 5 testes aprovados. Na época, `npm run format:check` acusava somente `vercel.json` (corrigido nesse mesmo commit). A E2E não foi executada: o `.env` local da API aponta o banco para um servidor remoto e não há `TEST_DB_HOST` local (a E2E nunca deve usar serviços remotos). Detalhes em [`docs/relatorios/`](docs/relatorios/).
+Resultados informados pela última auditoria do projeto (ET10/ET11). **Não foram reexecutados durante a atualização desta documentação**, que alterou somente arquivos Markdown:
 
-Situação verificada em 12/11/2026 (ET10 e ET11; commit `f4737d5`), com a API e um MySQL 8.0.46 local de testes:
+| Verificação                         | Resultado                                            |
+| ----------------------------------- | ---------------------------------------------------- |
+| Vitest (`npm test`)                 | **138 testes aprovados** (19 arquivos de teste)      |
+| E2E (Playwright)                    | **70 aprovados, 0 falhas, 14 ignorados por desenho** |
+| Prettier (`npm run format:check`)   | aprovado                                             |
+| ESLint (`npm run lint`)             | aprovado                                             |
+| TypeScript (`npm run typecheck`)    | aprovado                                             |
+| Build de produção (`npm run build`) | aprovado                                             |
 
-- `npm run format:check`, `npm run lint`, `npm run typecheck` e `npm run build` (produção) **aprovados**; JavaScript público compactado ≈ 125 KB na pesquisa e ≈ 120 KB na TV (limite do RNF26: 250 KB); nenhum segredo da API no `dist/`.
-- `npx vitest run --maxWorkers=2` → **19 arquivos, 135 testes aprovados** (16 novos da TV Wall).
-- E2E → **70 aprovados, 0 reprovados**: Chrome 42 (1440, 360 e 1920 px) e Firefox/WebKit 28; 14 casos ignorados por desenho (gravam dados e rodam em um projeto só). Inclui T39 (axe, 0 violações em 22 telas nos 4 navegadores/tamanhos), T40 (envio máx. 72 ms; painel máx. 852 ms) e T41.
-- Resultados completos, caso a caso, e evidências (JUnit, capturas, axe) no repositório da API: `docs/plano-e-relatorio-de-testes.md` e `docs/evidencias/ET10-ET11/`.
+Os 14 casos ignorados são por desenho do `playwright.config.ts`: o fluxo administrativo grava dados e roda em um projeto só (`computador-1440`); os demais projetos o excluem (`testIgnore` do `celular-360`) ou só executam as specs listadas em `testMatch`. Os testes de componentes e unidade cobrem o cliente HTTP, as variáveis de ambiente, a formatação, a autenticação (cliente, fluxo e troca de senha), os componentes de interface, a página inicial e o roteamento, a pesquisa pública e a manifestação, o dashboard, a Ouvidoria, setores, escalas, pesquisas, usuários, auditoria e a TV Wall.
 
-Auditoria de 20/11/2026 (ET10/ET11, `develop`, commit `7dafecf`; API real local, banco de teste): `format:check`, `lint`, `typecheck` e `build` aprovados; `npx vitest run --maxWorkers=2` → **19 arquivos, 137 testes aprovados** (+2: prazo de consulta e limite de 8 setores); E2E → **70 aprovados, 0 reprovados** (Chrome 42; Firefox/WebKit 28, após `npx playwright install firefox webkit`); `npm audit --omit=dev` → 0 vulnerabilidades. Defeito corrigido: consulta pendurada ao E42 travava as atualizações (agora 15 s de prazo). Sem `--maxWorkers=2`, em máquina com pouca memória livre, a suíte do Vitest oscila por tempo esgotado (5 a 32 falhas, sem relação com o código). **Continuam pendentes:** leitura física a 3 m (T31 manual) e demais testes manuais — por isso a ET11 **não** pode ser declarada concluída.
+Histórico das verificações anteriores (cada uma refere-se ao estado da época):
 
-Revisão de 21/11/2026 (`develop`, árvore limpa): `npm run format:check` **aprovado**; `npx vitest run --maxWorkers=2` → **19 arquivos, 137 testes aprovados**. Lint, typecheck, build e E2E não foram reexecutados nesta revisão (que só alterou documentação).
+- **05/11/2026** — 18 arquivos, 119 testes aprovados; E2E não executada.
+- **07/11/2026** (identidade vermelha, commit `6375032`) — lint, typecheck e build aprovados; 119 testes; plugin do Figma com tipos e 5 testes aprovados. Detalhes em [`docs/relatorios/`](docs/relatorios/).
+- **12/11/2026** (ET10 e ET11, commit `f4737d5`; API e MySQL 8.0.46 locais de testes) — 135 testes; E2E com 70 aprovados e 14 ignorados, incluindo T39 (axe, 0 violações em 22 telas nos 4 navegadores/tamanhos), T40 (envio máx. 72 ms; painel máx. 852 ms) e T41; JavaScript público compactado ≈ 125 KB na pesquisa e ≈ 120 KB na TV (limite do RNF26: 250 KB); nenhum segredo da API no `dist/`. Resultados caso a caso e evidências no repositório da API (`docs/plano-e-relatorio-de-testes.md`, `docs/evidencias/ET10-ET11/`).
+- **20/11/2026** (commit `7dafecf`) — 137 testes; E2E 70 aprovados; `npm audit --omit=dev` com 0 vulnerabilidades. Defeito corrigido: consulta pendurada ao E42 travava as atualizações (agora 15 s de prazo).
+
+Sem `--maxWorkers=2`, em máquina com pouca memória livre, a suíte do Vitest pode oscilar por tempo esgotado (sem relação com o código). **Continuam pendentes:** leitura física a 3 m (T31 manual) e demais testes manuais (veja [Limitações e pendências](#limitações-e-pendências)); por isso a ET11 **não** pode ser declarada concluída.
 
 Este repositório **não tem CI configurada** (não há `.github/workflows`). Rode `npm run check` antes de publicar.
 
@@ -257,16 +302,18 @@ Firefox e WebKit precisam de `npx playwright install firefox webkit` (uma vez). 
 **TV Wall na E2E:** o `e2e:fixture` cria um hospital exclusivo da TV, `E2E-TV-<sufixo>`, sem respostas, e a API da E2E o exibe (`TV_WALL_HOSPITAL_SHORT_NAME`). O sufixo é gerado pelo `playwright.config.ts` (`E2E_RUN_ID`) e repassado ao fixture, para que as contagens de T30 (0, 4 e 5 respostas) sejam exatas.
 
 1. Tenha um clone do repositório da API, com banco local preparado e `.env` com as variáveis do banco de **teste** (`TEST_DB_*`) e `JWT_SECRET`, conforme o README da API. A configuração da E2E passa à API o banco de teste (`DB_*` a partir de `TEST_DB_*`), o mesmo usado pelo `npm run e2e:fixture`. Variáveis já definidas no terminal (ex.: `TEST_DB_HOST`) têm prioridade sobre o `.env` da API.
-2. Aqui: defina `FHDOD_API_DIR` com o caminho desse clone e rode `npm run test:e2e`.
+2. Aqui: defina `FHDOD_API_DIR` com o caminho desse clone e rode `npm run test:e2e`. O `playwright.config.ts` carrega o `.env` da pasta da API (`process.loadEnvFile`) e sobe a API nela com `npm run dev:no-watch`.
+3. Requisitos: MySQL local com o banco de teste da API (`TEST_DB_NAME`, padrão `fhdod_test`), Chrome instalado (`channel: 'chrome'`) e, para Firefox/WebKit, `npx playwright install firefox webkit`. A E2E não roda contra a publicação nem contra serviços remotos.
 
 Num MySQL de testes com disco lento (ex.: dados em pasta temporária varrida pelo antivírus), commits podem levar vários segundos e causar falhas falsas por tempo esgotado; numa instância só de testes, `innodb_flush_log_at_trx_commit=2` resolve.
 
 | Variável           | Padrão                    | Uso                                                                                                                                                                                                                                                                                                                                                                         |
 | ------------------ | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `FHDOD_API_DIR`    | `..` (pasta acima)        | pasta do projeto da API, relativa à raiz deste repositório ou absoluta. O padrão vem da época em que o frontend ficava dentro do repositório da API; agora que o repositório é separado, **defina esta variável** (ex.: `../fhdod-api`).                                                                                                                                    |
+| `FHDOD_API_DIR`    | `..` (pasta acima)        | pasta do projeto da API, relativa à raiz deste repositório ou absoluta (`e2e/environment.ts`: `resolve(<raiz>, FHDOD_API_DIR ?? '..')`). O padrão vem da época em que o frontend ficava dentro do repositório da API; agora que o repositório é separado, **defina esta variável** (ex.: `../fhdod-experiencia-paciente`, como no `.env.example`).                          |
+| `E2E_RUN_ID`       | gerado (6 hexadecimais)   | sufixo da execução, usado no hospital exclusivo da TV Wall (`E2E-TV-<sufixo>`); definido automaticamente por `e2e/environment.ts`, normalmente não precisa ser informado.                                                                                                                                                                                                   |
 | `E2E_EVIDENCE_DIR` | `test-results/evidencias` | onde salvar as capturas de tela (dados fictícios). Para atualizar as evidências versionadas no repositório da API, aponte para a pasta `docs/evidencias` do clone da API — **atenção:** todas as specs gravam nas pastas das próprias etapas (ET03, ET04-ET06…), sobrescrevendo as capturas históricas; depois, restaure com `git checkout` as etapas que não deviam mudar. |
 
-Cenários cobertos (`e2e/`): autenticação (credenciais inválidas, redirecionamento sem sessão, logout com limpeza, perfil Visualizador sem acesso a Usuários/Auditoria); pesquisa pública (abertura sem login nem cookies, 404/410, layouts de 360 a 1440 px, recarga mantém respostas, conclusão e inatividade apagam os dados); manifestação anônima com protocolo e contato com aceite; texto com `<script>` e aspas SQL exibido literalmente na Ouvidoria (T41); Ouvidoria (status, nota, contato auditado e eliminação); painel atualizando com nova resposta e exportação .xlsx; administração (cadastro, troca obrigatória, desativação, redefinição e auditoria); equipe, importação de escala, pesquisa publicada e QR Code decodificado; **TV Wall** (T29–T31: tráfego só para o E42, sem links nem dados pessoais, supressão com 0/4/5 respostas, relógio + 60 s, API fora com os últimos dados, recuperação, recarga de 6 h, medidas e contraste no DOM em 1920 × 1080); **acessibilidade** (T39: axe WCAG 2.0/2.1/2.2 A e AA em TL01–TL17, início, 404 e TV; teclado; alvos de 44 px); **desempenho** (T40: 20 envios e 20 carregamentos do painel).
+Cenários cobertos (`e2e/`): autenticação (credenciais inválidas, redirecionamento sem sessão, logout com limpeza, perfil Visualizador sem acesso a Usuários/Auditoria); pesquisa pública (abertura sem login nem cookies, 404/410, layouts de 360 a 1440 px, recarga mantém respostas, conclusão e inatividade apagam os dados); manifestação anônima com protocolo e contato com aceite; texto com `<script>` e aspas SQL exibido literalmente na Ouvidoria (T41); Ouvidoria (status, nota, contato auditado e eliminação); painel atualizando com nova resposta e exportação .xlsx; administração (cadastro, troca obrigatória, desativação, redefinição e auditoria); equipe, importação de escala, pesquisa publicada e QR Code decodificado; **TV Wall** (T29–T31: tráfego só para o E42, sem outros links além do retorno a `/painel` e sem dados pessoais, supressão com 0/4/5 respostas, relógio + 60 s, API fora com os últimos dados, recuperação, recarga de 6 h, medidas e contraste no DOM em 1920 × 1080); **acessibilidade** (T39: axe WCAG 2.0/2.1/2.2 A e AA em TL01–TL17, início, 404 e TV; teclado; alvos de 44 px); **desempenho** (T40: 20 envios e 20 carregamentos do painel).
 
 Limitações conhecidas da E2E: no WebKit (como no Safari padrão) Tab não percorre links, então lá o link "Pular para o conteúdo" recebe o foco diretamente; no Firefox, Voltar/Avançar restaura a confirmação do bfcache em vez de recarregar (o teste exige, nos dois casos, nenhuma resposta visível e nenhuma chave `fhdod:*`).
 
@@ -298,14 +345,16 @@ A aplicação está publicada em <https://fhdod-frontend.vercel.app>.
 - `6375032` (07/11/2026, integrado à `develop`; veio da branch `feature/identidade-visual-vermelha-figma`) — identidade branco e vermelho e plugin do Figma ([relatório](docs/relatorios/2026-11-07-identidade-visual-vermelha-figma.md)).
 - `f4737d5` (12/11/2026, `develop`) — ET10 e ET11: TV Wall (`/tv`), E2E em Firefox/WebKit e TV, axe (T39), desempenho (T40), T41 na interface e correções (fixture da E2E no Windows, acessibilidade do gráfico do painel, `HydrateFallback`, texto da página inicial).
 - `7dafecf` (20/11/2026, `develop`) — prazo de 15 s nas consultas da TV Wall e limite de 8 setores exibidos.
+- `70b5564` (`develop`) — documentação e inventário de telas.
+- **Revisão visual de novembro de 2026** (árvore de trabalho da `develop`, ainda sem commit na data desta documentação) — componentes compartilhados (`Page`, `Table`, `button-classes`, campos e seletores padronizados), cabeçalhos de página, painéis de filtros, tabelas em cartões no celular, novo cabeçalho administrativo (inclusive no celular), logotipo oficial, melhorias no login, botão "Entrar no sistema" na página inicial, item "TV Wall" no menu administrativo, reformulação visual da TV Wall e link "Voltar à página principal" (`/painel`), com a RF72 atualizada para permitir exclusivamente esse link.
 
 ## Limitações e pendências
 
 - **TV Wall:** leitura física a 3 m **não verificada** (procedimento em [`docs/tv-wall.md`](docs/tv-wall.md)); sem tela no Figma; publicação na Vercel com a TL15 **não verificada** (a última verificação da publicação, em 05/11/2026, é anterior à TV Wall).
-- **Página inicial:** não há link para `/login` (o acesso administrativo é feito digitando `/login`).
+- **Revisão visual não commitada:** na data desta documentação, as alterações descritas em "Histórico relevante" estão na árvore de trabalho da `develop`; o relatório e o plugin do Figma refletem a identidade anterior à revisão.
 - **Testes manuais não executados:** leitor de tela (T39), QR Code com câmera (T02), abertura do `.xlsx` no Excel/LibreOffice (T20). T35 (OpenAPI) bloqueado na API.
 - **Publicação com `VITE_APP_ENV=development`** (veja [Publicação na Vercel](#publicação-na-vercel)).
 - **Sem CI** neste repositório.
 - **Cor institucional** `#c8102e` a confirmar com a FHDOD (veja [Identidade visual](#identidade-visual)).
-- **Figma:** o plugin em `figma-plugin/` ainda precisa ser executado manualmente no Figma Desktop para aplicar a nova identidade ao arquivo de design; não há confirmação neste repositório de que isso já foi feito. A TV Wall (TL15) não é criada pelo plugin.
+- **Figma:** o arquivo de design não reflete a revisão visual de novembro de 2026 (logotipo oficial, tabelas em cartões, novo cabeçalho). O plugin em `figma-plugin/` ainda precisa ser executado manualmente no Figma Desktop para aplicar a nova identidade ao arquivo de design; não há confirmação neste repositório de que isso já foi feito. A TV Wall (TL15) não é criada pelo plugin.
 - **E2E** depende de um clone local da API, do MySQL, do Chrome instalado e dos navegadores Firefox/WebKit do Playwright; não roda contra a publicação.

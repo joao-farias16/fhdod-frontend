@@ -1,7 +1,9 @@
+import { ChartNoAxesColumn } from 'lucide-react';
 import { type ReactNode, useId, useState } from 'react';
 import { Link } from 'react-router';
 
 import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Page';
 import { formatLocalDate } from '../../lib/format';
 import type { NpsIndicator, Summary, TrendPoint } from './dashboard-api';
 import { formatNumber, npsText, nText, SUPPRESSED_TEXT } from './dashboard-format';
@@ -9,9 +11,17 @@ import { formatNumber, npsText, nText, SUPPRESSED_TEXT } from './dashboard-forma
 /** RF60: estado sem dados com mensagem e Limpar filtros (NPS nunca exibido como 0). */
 export function NoData({ onClear }: { onClear: () => void }) {
   return (
-    <div className="space-y-3 rounded-xl border border-dashed border-neutral-border bg-white p-6 text-center">
-      <p className="font-semibold">Nenhuma resposta para os filtros escolhidos.</p>
-      <p className="text-slate-700">Amplie o período ou limpe os filtros.</p>
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+      <span
+        aria-hidden="true"
+        className="flex size-12 items-center justify-center rounded-full bg-slate-100 text-slate-500"
+      >
+        <ChartNoAxesColumn className="size-6" />
+      </span>
+      <div className="space-y-1">
+        <p className="font-semibold text-slate-900">Nenhuma resposta para os filtros escolhidos.</p>
+        <p className="text-slate-600">Amplie o período ou limpe os filtros.</p>
+      </div>
       <Button variant="secondary" onClick={onClear}>
         Limpar filtros
       </Button>
@@ -25,16 +35,22 @@ interface StatCardProps {
   detail: string;
   /** Texto adicional (por exemplo, comparação). */
   extra?: string | undefined;
+  /** Indicador principal (NPS): destaque com a cor da identidade. */
+  highlight?: boolean;
 }
 
 /** Cartão de indicador: valor grande e o número de respostas consideradas (RF53). */
-export function StatCard({ label, value, detail, extra }: StatCardProps) {
+export function StatCard({ label, value, detail, extra, highlight = false }: StatCardProps) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-sm font-medium text-slate-700">{label}</p>
-      <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900">{value}</p>
-      <p className="text-sm text-slate-700">{detail}</p>
-      {extra === undefined ? null : <p className="mt-1 text-sm text-slate-800">{extra}</p>}
+    <div
+      className={`flex flex-col rounded-xl border bg-white p-5 shadow-sm ${highlight ? 'border-l-4 border-slate-200 border-l-brand-700' : 'border-slate-200'}`}
+    >
+      <p className="text-sm font-semibold text-slate-600">{label}</p>
+      <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900 tabular-nums">{value}</p>
+      <p className="mt-1 text-sm text-slate-600">{detail}</p>
+      {extra === undefined ? null : (
+        <p className="mt-3 border-t border-slate-100 pt-3 text-sm text-slate-800">{extra}</p>
+      )}
     </div>
   );
 }
@@ -54,8 +70,9 @@ export function SummaryCards({ summary }: { summary: Summary }) {
   const { indicators, manifestations, coverage } = summary;
   const percent = (value: number | null) => (value === null ? '—' : `${formatNumber(value)}%`);
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <StatCard
+        highlight
         label="NPS"
         value={npsText(indicators)}
         detail={nText(indicators)}
@@ -372,29 +389,38 @@ export function GroupTable({
   rows: { key: string; label: string; href?: string | undefined; indicators: NpsIndicator }[];
 }) {
   return (
-    <div className="overflow-x-auto" role="region" aria-label={caption} tabIndex={0}>
-      <table className="w-full min-w-[480px] text-left text-sm">
+    <div className="-mx-5 overflow-x-auto sm:-mx-6" role="region" aria-label={caption} tabIndex={0}>
+      <table className="w-full text-left text-sm sm:min-w-[480px]">
         <caption className="sr-only">{caption}</caption>
-        <thead className="bg-slate-100 text-slate-800">
+        <thead className="border-y border-slate-200 bg-slate-50 text-slate-700">
           <tr>
-            <th scope="col" className="px-3 py-2">
+            <th
+              scope="col"
+              className="px-5 py-2.5 text-xs font-semibold tracking-wide uppercase sm:px-6"
+            >
               Grupo
             </th>
-            <th scope="col" className="px-3 py-2 text-right">
+            <th
+              scope="col"
+              className="px-3 py-2.5 text-right text-xs font-semibold tracking-wide uppercase"
+            >
               NPS
             </th>
-            <th scope="col" className="px-3 py-2 text-right">
+            <th
+              scope="col"
+              className="px-3 py-2.5 text-right text-xs font-semibold tracking-wide uppercase"
+            >
               Respostas (n)
             </th>
-            <th scope="col" className="w-1/3 px-3 py-2">
+            <th scope="col" className="hidden w-1/3 px-5 py-2.5 sm:table-cell sm:px-6">
               <span className="sr-only">Barra do NPS</span>
             </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200">
           {rows.map((row) => (
-            <tr key={row.key}>
-              <th scope="row" className="px-3 py-2 font-medium">
+            <tr key={row.key} className="transition-colors hover:bg-slate-50">
+              <th scope="row" className="px-5 py-1.5 font-medium sm:px-6">
                 {row.href === undefined ? (
                   row.label
                 ) : (
@@ -408,7 +434,7 @@ export function GroupTable({
               </th>
               <td className="px-3 py-2 text-right tabular-nums">{npsText(row.indicators)}</td>
               <td className="px-3 py-2 text-right tabular-nums">{nText(row.indicators)}</td>
-              <td className="px-3 py-2">
+              <td className="hidden px-5 py-2 sm:table-cell sm:px-6">
                 {row.indicators.nps === null || row.indicators.suppressed ? null : (
                   <Bar ratio={(row.indicators.nps + 100) / 200} />
                 )}
@@ -421,29 +447,21 @@ export function GroupTable({
   );
 }
 
-/** Seção com título e conteúdo do painel. */
+/** Seção com título e conteúdo do painel (mesmo cartão das demais telas). */
 export function Panel({
   title,
+  description,
   children,
   actions,
 }: {
   title: string;
+  description?: string;
   children: ReactNode;
   actions?: ReactNode;
 }) {
-  const ids = useId();
   return (
-    <section
-      aria-labelledby={ids}
-      className="space-y-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id={ids} className="text-lg font-semibold">
-          {title}
-        </h2>
-        {actions}
-      </div>
+    <Card title={title} description={description} actions={actions}>
       {children}
-    </section>
+    </Card>
   );
 }

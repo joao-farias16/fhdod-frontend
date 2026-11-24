@@ -1,4 +1,3 @@
-import { HeartPulse } from 'lucide-react';
 import { Link, Outlet } from 'react-router';
 
 /** Estrutura comum das páginas: link de salto, cabeçalho, conteúdo e aviso de dados fictícios. */
@@ -15,8 +14,13 @@ export function AppLayout() {
       <header className="bg-brand-700 text-white">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-4 sm:px-6">
           <Link to="/" className="flex min-h-11 items-center gap-2 rounded-md text-white">
-            <HeartPulse aria-hidden="true" className="size-7" />
-            <span className="text-xl font-bold tracking-tight">FHDOD</span>
+            <img
+              src="/images/logo-fhdod-oficial.png"
+              alt="FHDOD"
+              width="245"
+              height="102"
+              className="h-12 w-auto rounded-md"
+            />
           </Link>
           <span className="hidden text-sm text-brand-100 sm:inline">
             Gestão da Experiência do Paciente

@@ -88,7 +88,7 @@ export function SectorFormDialog({ sector, onClose, onSubmit }: SectorFormDialog
           error={errors.description?.message}
           {...register('description')}
         />
-        <div className="flex flex-wrap justify-end gap-3 pt-2">
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
@@ -168,7 +168,7 @@ export function TeamFormDialog({ sectorName, team, onClose, onSubmit }: TeamForm
               'O nome deve ter de 2 a 120 caracteres.',
           })}
         />
-        <div className="flex flex-wrap justify-end gap-3 pt-2">
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>

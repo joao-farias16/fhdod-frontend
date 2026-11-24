@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { RotateCw } from 'lucide-react';
-import { useState } from 'react';
+import { Eraser, RotateCw, Search } from 'lucide-react';
+import { type ReactNode, useState } from 'react';
 
 import { Button } from '../../components/ui/Button';
-import { SelectField, TextField } from '../../components/ui/Field';
+import { CheckboxField, SelectField, TextField } from '../../components/ui/Field';
+import { FilterPanel } from '../../components/ui/Page';
 import type { PageMeta } from '../../lib/api-client';
 import { addDays, localDateOf } from '../../lib/format';
 import { useAuth, useMe } from '../auth/auth-context';
@@ -40,11 +41,13 @@ interface Props {
   refreshing?: boolean;
   /** Texto do botão principal (TL14: "Gerar arquivo Excel"). */
   submitLabel?: string;
+  /** Ícone do botão principal (padrão: lupa). */
+  submitIcon?: ReactNode;
   submitting?: boolean;
 }
 
 /**
- * Filtros do painel em uma linha acima dos gráficos (RF56, RF57, RF58): atalhos de período e
+ * Filtros do painel em grade acima dos gráficos (RF56, RF57, RF58): atalhos de período e
  * intervalo personalizado, setor, pesquisa (perfis que consultam pesquisas), turno, equipe, origem
  * e comparação com o período anterior. Os valores vão para a URL ao aplicar; a tela remonta o
  * formulário (key) quando os filtros aplicados mudam.
@@ -58,6 +61,7 @@ export function DashboardFiltersForm({
   onRefresh,
   refreshing = false,
   submitLabel = 'Aplicar filtros',
+  submitIcon = <Search aria-hidden="true" className="size-4" />,
   submitting = false,
 }: Props) {
   const me = useMe();
@@ -81,17 +85,46 @@ export function DashboardFiltersForm({
   const shortcut = shortcutOf(draft.from, draft.to);
 
   return (
-    <form
-      role="search"
-      aria-label="Filtros do painel"
-      noValidate
+    <FilterPanel
+      label="Filtros do painel"
       onSubmit={(event) => {
         event.preventDefault();
         const problem = periodError(draft.from, draft.to);
         setError(problem);
         if (problem === null) onApply(draft, draftCompare);
       }}
-      className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4"
+      options={
+        compare === undefined ? undefined : (
+          <CheckboxField
+            label="Comparar com o período anterior"
+            checked={draftCompare}
+            onChange={(event) => {
+              setDraftCompare(event.target.checked);
+            }}
+          />
+        )
+      }
+      actions={
+        <>
+          {onRefresh === undefined ? null : (
+            <Button variant="ghost" onClick={onRefresh} disabled={refreshing}>
+              <RotateCw
+                aria-hidden="true"
+                className={`size-4 ${refreshing ? 'animate-spin' : ''}`}
+              />
+              Atualizar
+            </Button>
+          )}
+          <Button variant="secondary" onClick={onClear}>
+            <Eraser aria-hidden="true" className="size-4" />
+            Limpar filtros
+          </Button>
+          <Button type="submit" disabled={submitting} aria-busy={submitting}>
+            {submitIcon}
+            {submitLabel}
+          </Button>
+        </>
+      }
     >
       <SelectField
         label="Período"
@@ -203,33 +236,6 @@ export function DashboardFiltersForm({
           </option>
         ))}
       </SelectField>
-      {compare === undefined ? null : (
-        <label className="flex min-h-11 items-center gap-3 self-end">
-          <input
-            type="checkbox"
-            checked={draftCompare}
-            onChange={(event) => {
-              setDraftCompare(event.target.checked);
-            }}
-            className="size-5"
-          />
-          Comparar com o período anterior
-        </label>
-      )}
-      <div className="flex flex-wrap items-end gap-2 sm:col-span-2 lg:col-span-4">
-        <Button type="submit" disabled={submitting} aria-busy={submitting}>
-          {submitLabel}
-        </Button>
-        <Button variant="secondary" onClick={onClear}>
-          Limpar filtros
-        </Button>
-        {onRefresh === undefined ? null : (
-          <Button variant="ghost" onClick={onRefresh} disabled={refreshing}>
-            <RotateCw aria-hidden="true" className={`size-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
-        )}
-      </div>
-    </form>
+    </FilterPanel>
   );
 }

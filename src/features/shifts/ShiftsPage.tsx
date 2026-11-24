@@ -5,9 +5,12 @@ import { Link } from 'react-router';
 
 import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
+import { buttonClasses } from '../../components/ui/button-classes';
 import { Dialog } from '../../components/ui/Dialog';
-import { SelectField, TextField } from '../../components/ui/Field';
+import { CheckboxField, SelectField, TextField } from '../../components/ui/Field';
+import { CARD_CLASS, FilterPanel, PageContainer, PageHeader } from '../../components/ui/Page';
 import { EmptyState, ErrorState, Loading } from '../../components/ui/States';
+import { Tag } from '../../components/ui/Tag';
 import { applyApiError, type Failure } from '../../lib/errors';
 import { addDays, daysInclusive, formatLocalDate, localDateOf } from '../../lib/format';
 import { useMe } from '../auth/auth-context';
@@ -117,7 +120,7 @@ function ShiftFormDialog({
             {...register('endTime', { required: 'Informe a hora de fim.' })}
           />
         </div>
-        <div className="flex flex-wrap justify-end gap-3 pt-2">
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
@@ -179,7 +182,7 @@ function CancelShiftDialog({
               'Descreva o motivo com 5 a 300 caracteres.',
           })}
         />
-        <div className="flex flex-wrap justify-end gap-3 pt-2">
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={onClose} data-autofocus>
             Voltar
           </Button>
@@ -230,47 +233,42 @@ export function ShiftsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Escala e turnos</h1>
-          <p className="text-slate-700">Turnos por dia, no horário de Brasília.</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          {can(me, 'rosters:import') ? (
-            <Link
-              to="/admin/escalas/importar"
-              className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-neutral-border bg-white px-4 font-medium hover:bg-slate-100"
-            >
-              <Upload aria-hidden="true" className="size-5" />
-              Importar escala
-            </Link>
-          ) : null}
-          {can(me, 'shifts:create') ? (
-            <Button
-              disabled={sector?.isActive !== true}
-              onClick={() => {
-                setSuccess(null);
-                setDialog({ kind: 'create' });
-              }}
-            >
-              <CalendarPlus aria-hidden="true" className="size-5" />
-              Novo turno
-            </Button>
-          ) : null}
-        </div>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Escala e turnos"
+        description="Turnos por dia, no horário de Brasília."
+        actions={
+          <>
+            {can(me, 'rosters:import') ? (
+              <Link to="/admin/escalas/importar" className={buttonClasses('secondary')}>
+                <Upload aria-hidden="true" className="size-5" />
+                Importar escala
+              </Link>
+            ) : null}
+            {can(me, 'shifts:create') ? (
+              <Button
+                disabled={sector?.isActive !== true}
+                onClick={() => {
+                  setSuccess(null);
+                  setDialog({ kind: 'create' });
+                }}
+              >
+                <CalendarPlus aria-hidden="true" className="size-5" />
+                Novo turno
+              </Button>
+            ) : null}
+          </>
+        }
+      />
 
       {success === null ? null : <Alert tone="success">{success}</Alert>}
 
-      <form
-        role="search"
-        aria-label="Filtros da escala"
-        noValidate
+      <FilterPanel
+        label="Filtros da escala"
+        columns={5}
         onSubmit={(event) => {
           event.preventDefault();
         }}
-        className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-5"
       >
         <SelectField
           label="Setor"
@@ -319,18 +317,15 @@ export function ShiftsPage() {
             set({ to: event.target.value });
           }}
         />
-        <label className="flex min-h-11 items-center gap-3 self-end">
-          <input
-            type="checkbox"
-            className="size-5"
-            checked={filters.includeCancelled}
-            onChange={(event) => {
-              set({ includeCancelled: event.target.checked });
-            }}
-          />
-          Mostrar cancelados
-        </label>
-      </form>
+        <CheckboxField
+          alignWithFields
+          label="Mostrar cancelados"
+          checked={filters.includeCancelled}
+          onChange={(event) => {
+            set({ includeCancelled: event.target.checked });
+          }}
+        />
+      </FilterPanel>
 
       <section aria-labelledby="escala-titulo" className="space-y-4">
         <h2 id="escala-titulo" className="sr-only">
@@ -348,22 +343,25 @@ export function ShiftsPage() {
           </EmptyState>
         ) : (
           [...byDate.entries()].map(([date, items]) => (
-            <div key={date} className="rounded-xl border border-slate-200 bg-white shadow-sm">
-              <h3 className="border-b border-slate-200 px-4 py-2 font-semibold">
+            <div key={date} className={`${CARD_CLASS} overflow-hidden`}>
+              <h3 className="border-b border-slate-200 bg-slate-50 px-4 py-2.5 font-semibold text-slate-900 sm:px-5">
                 {formatLocalDate(date)}
               </h3>
               <ul className="divide-y divide-slate-200">
                 {items.map((shift) => (
-                  <li key={shift.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                    <span className="font-mono">
+                  <li
+                    key={shift.id}
+                    className={`flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5 sm:px-5 ${shift.cancelledAt === null ? '' : 'bg-slate-50'}`}
+                  >
+                    <span className="min-w-28 font-mono font-semibold text-slate-900 tabular-nums">
                       {shift.startTime}–{shift.endTime}
                       {shift.endsNextDay ? ' (dia seguinte)' : ''}
                     </span>
-                    <span className="font-medium">{shift.team.name}</span>
+                    <span className="font-semibold text-slate-900">{shift.team.name}</span>
                     <span className="text-slate-700">{PERIOD_LABELS[shift.period]}</span>
-                    <span className="text-sm text-slate-700">
+                    <Tag tone={shift.source === 'import' ? 'info' : 'neutral'}>
                       {shift.source === 'import' ? 'Importado' : 'Manual'}
-                    </span>
+                    </Tag>
                     {shift.cancelledAt === null ? null : (
                       <span className="text-sm font-medium text-danger-700">
                         Cancelado: {shift.cancelReason}
@@ -372,7 +370,7 @@ export function ShiftsPage() {
                     {shift.cancelledAt === null && can(me, 'shifts:cancel') ? (
                       <Button
                         variant="ghost"
-                        className="ml-auto"
+                        className="ml-auto px-3 text-danger-700 hover:bg-red-50 hover:text-danger-800"
                         aria-label={`Cancelar turno de ${shift.team.name} em ${formatLocalDate(shift.date)} às ${shift.startTime}`}
                         onClick={() => {
                           setSuccess(null);
@@ -416,6 +414,6 @@ export function ShiftsPage() {
           }}
         />
       ) : null}
-    </div>
+    </PageContainer>
   );
 }

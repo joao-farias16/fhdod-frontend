@@ -1,5 +1,6 @@
 import { CircleCheck, CircleX, LoaderCircle, RotateCw } from 'lucide-react';
 
+import { buttonClasses } from '../../components/ui/button-classes';
 import { ApiError } from '../../lib/api-client';
 import { formatDateTime } from '../../lib/format';
 import { useApiHealth } from './use-api-health';
@@ -41,7 +42,7 @@ export function ApiStatusCard() {
               type="button"
               onClick={() => void refetch()}
               disabled={isFetching}
-              className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-neutral-border px-4 font-medium hover:bg-slate-100 disabled:opacity-60"
+              className={buttonClasses('secondary')}
             >
               <RotateCw aria-hidden="true" className="size-4" />
               {isFetching ? 'Tentando…' : 'Tentar novamente'}

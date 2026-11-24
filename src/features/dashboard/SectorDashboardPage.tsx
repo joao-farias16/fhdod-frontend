@@ -2,6 +2,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 
+import { PageContainer, PageHeader } from '../../components/ui/Page';
 import { ErrorState, Loading } from '../../components/ui/States';
 import { formatLocalDate } from '../../lib/format';
 import { ExportButtons } from '../reports/ExportButtons';
@@ -51,15 +52,15 @@ function QuestionsTable({ items }: { items: QuestionResult[] }) {
     <div className="space-y-4">
       {byStage(items).map((group) => (
         <div key={group.stage} className="space-y-2">
-          <h3 className="font-semibold">{group.stage}</h3>
+          <h3 className="font-semibold text-slate-900">{group.stage}</h3>
           <div
-            className="overflow-x-auto"
+            className="overflow-x-auto rounded-lg border border-slate-200"
             role="region"
             aria-label={`Perguntas da etapa ${group.stage}`}
             tabIndex={0}
           >
             <table className="w-full min-w-[720px] text-left text-sm">
-              <thead className="bg-slate-100 text-slate-800">
+              <thead className="border-b border-slate-200 bg-slate-50 text-slate-700">
                 <tr>
                   <th scope="col" className="px-3 py-2">
                     Pergunta
@@ -82,7 +83,10 @@ function QuestionsTable({ items }: { items: QuestionResult[] }) {
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {group.items.map((item) => (
-                  <tr key={`${item.survey.id}-${item.questionId}`}>
+                  <tr
+                    key={`${item.survey.id}-${item.questionId}`}
+                    className="transition-colors hover:bg-slate-50"
+                  >
                     <th scope="row" className="px-3 py-2 font-medium">
                       {item.text}
                       <span className="block text-xs font-normal text-slate-600">
@@ -232,23 +236,19 @@ export function SectorDashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
+    <PageContainer>
       <Link
         to={`/painel${backSearch === '' ? '' : `?${backSearch}`}`}
-        className="inline-flex min-h-11 items-center gap-2 font-medium text-brand-700"
+        className="-my-2 inline-flex min-h-11 items-center gap-2 rounded-md font-medium text-brand-700 hover:text-brand-800 hover:underline"
       >
         <ArrowLeft aria-hidden="true" className="size-4" />
         Voltar ao painel geral
       </Link>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{name}</h1>
-          <p className="text-slate-700">
-            {formatLocalDate(filters.from)} a {formatLocalDate(filters.to)}
-          </p>
-        </div>
-        <ExportButtons filters={filters} />
-      </div>
+      <PageHeader
+        title={name}
+        description={`${formatLocalDate(filters.from)} a ${formatLocalDate(filters.to)}`}
+        actions={<ExportButtons filters={filters} />}
+      />
       <DashboardFiltersForm
         key={`${JSON.stringify(filters)}-${String(compare)}`}
         filters={filters}
@@ -262,6 +262,6 @@ export function SectorDashboardPage() {
       <div aria-live="polite" aria-busy={refreshing}>
         {body}
       </div>
-    </div>
+    </PageContainer>
   );
 }
