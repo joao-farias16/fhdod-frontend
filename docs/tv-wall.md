@@ -2,23 +2,28 @@
 
 Tela pública para TV com os indicadores agregados de satisfação do hospital (RF68–RF72, RN09,
 RN21; Tabela 21: "NPS geral, contagens, tendência, setores e convite"). Contrato do endpoint no
-repositório da API: `docs/tv-wall.md` (E42).
+repositório da API: `docs/tv-wall.md` (E42). Visão geral do frontend e das demais telas:
+[`README.md`](../README.md) e [`inventario-de-telas.md`](inventario-de-telas.md).
 
 ## Acesso e isolamento (RF72)
 
-| Item            | Implementação                                                                                                                                                                            |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Rota            | `/tv` (opcional: `/tv?periodo=7d`, `30d` ou `90d`; padrão e qualquer outro valor: `30d`)                                                                                                 |
-| Layout          | rota própria, **fora** do layout público e do administrativo: sem menu, sem cabeçalho com links, sem rodapé administrativo. A página não tem nenhum link, botão, formulário ou campo     |
-| Código          | `src/features/tv-wall/` carregado sob demanda em pedaço próprio (`TvWallPage-*.js`), sem o cliente de autenticação, a sessão ou qualquer tela administrativa                             |
-| Dados           | **somente** o E42 — `GET /api/v1/tv-wall/summary?period=…`, pelo `apiGet` de `src/lib/api-client.ts`, sem `Authorization` e sem cookies. Nenhum acesso a banco ou a serviço de terceiros |
-| Lista de campos | `fetchTvWallSummary` confere a forma da resposta (`isTvWallSummary`) e copia apenas os campos do contrato (`pickAllowedFields`); campos extras nunca chegam aos componentes              |
-| Dados pessoais  | a tela só exibe NPS, quantidades, percentuais, datas e nomes de setor. Não há texto de manifestação, contato, protocolo, equipe, turno ou usuário — nem no E42, nem na interface         |
+| Item            | Implementação                                                                                                                                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Rota            | `/tv` (opcional: `/tv?periodo=7d`, `30d` ou `90d`; padrão e qualquer outro valor: `30d`)                                                                                                                                             |
+| Layout          | rota própria, **fora** do layout público e do administrativo: sem menu, sem cabeçalho com links, sem rodapé administrativo. O único link é o retorno à página principal (`/painel`); não há outros links, botão, formulário ou campo |
+| Código          | `src/features/tv-wall/` carregado sob demanda em pedaço próprio (`TvWallPage-*.js`), sem o cliente de autenticação, a sessão ou qualquer tela administrativa                                                                         |
+| Dados           | **somente** o E42 — `GET /api/v1/tv-wall/summary?period=…`, pelo `apiGet` de `src/lib/api-client.ts`, sem `Authorization` e sem cookies. Nenhum acesso a banco ou a serviço de terceiros                                             |
+| Lista de campos | `fetchTvWallSummary` confere a forma da resposta (`isTvWallSummary`) e copia apenas os campos do contrato (`pickAllowedFields`); campos extras nunca chegam aos componentes                                                          |
+| Dados pessoais  | a tela só exibe NPS, quantidades, percentuais, datas e nomes de setor. Não há texto de manifestação, contato, protocolo, equipe, turno ou usuário — nem no E42, nem na interface                                                     |
 
 ## Conteúdo
 
-- **Cabeçalho:** FHDOD — Experiência do Paciente; período (ex.: "Últimos 30 dias", datas do E42) e
-  a hora em que a API calculou os dados (`generatedAt`, fuso America/Sao_Paulo).
+- **Cabeçalho** (faixa `brand-800`): link "Voltar à página principal" (seta e texto, destino
+  `/painel`), logotipo oficial (`/images/logo-fhdod-oficial.png`, texto alternativo "FHDOD") com
+  "Experiência do Paciente", período (ex.: "Últimos 30 dias", datas do E42) e a hora em que a API
+  calculou os dados (`generatedAt`, fuso America/Sao_Paulo). O link aparece também nos estados de
+  carregamento e de falha. Como `/painel` é uma rota administrativa, quem abre a TV sem sessão é
+  levado ao login.
 - **NPS geral do hospital** (160 px), **respostas consideradas** (64 px), **% de promotores**
   (notas 9 e 10) e **% de detratores** (notas 0 a 6).
 - **Tendência do NPS:** um ponto por dia (7 e 30 dias) ou por semana (90 dias), como vem do E42,
@@ -27,11 +32,18 @@ repositório da API: `docs/tv-wall.md` (E42).
   série completa em uma tabela.
 - **NPS por setor:** até 8 setores (limite também aplicado no frontend, `TV_MAX_SECTORS`), na ordem do E42 (maior NPS primeiro), com o número de
   respostas de cada um.
-- **Convite** (texto institucional fixo): "Sua opinião melhora o nosso atendimento. Avalie o setor
+- **Rodapé** com ícone de QR Code e o **convite** (texto institucional fixo): "Sua opinião melhora o nosso atendimento. Avalie o setor
   em que você foi atendido pelo QR Code do cartaz." e o aviso "Ambiente acadêmico — dados fictícios.".
 
 Números em pt-BR (vírgula decimal, RNF29) com o sinal de menos tipográfico (−), mais visível à
 distância.
+
+**Estrutura visual** (revisão visual de novembro de 2026): fundo `slate-100` com cartões brancos de
+cantos arredondados (`PANEL` em `TvWallPage.tsx`). Na coluna esquerda, o cartão do NPS geral (borda
+superior `brand-800`) com o total de respostas ao lado, os cartões de promotores e detratores e o
+cartão da tendência; na direita, o cartão "NPS por setor". Abaixo de 1024 px as colunas empilham.
+Estados vazios usam ícone e moldura tracejada (setores sem dados; tendência sem nenhum ponto com
+valor mostra um aviso compacto no lugar dos eixos).
 
 ## Estados
 
@@ -77,7 +89,8 @@ na variante `tv:` (tela com pelo menos 1600 × 1000 px):
 
 Cores: texto `slate-900`/`slate-700` sobre branco e branco sobre `brand-800` (#a50d26, 7,82:1);
 avisos em vermelho-escuro/âmbar-escuro sobre fundo claro — **todo texto com contraste de 7:1 ou
-mais**. O significado nunca depende só da cor (texto e ícone, RNF08). Em 1920 × 1080 não há rolagem
+mais** (o E2E T31 mede o contraste no DOM). O link de retorno usa branco sobre `brand-800` e, com
+foco do teclado, contorno branco de 2 px. O significado nunca depende só da cor (texto e ícone, RNF08). Em 1920 × 1080 não há rolagem
 horizontal nem vertical, inclusive com o aviso de indisponibilidade. Em telas menores a página usa
 a escala comum e não tem rolagem horizontal (verificado em 360 e 1440 px).
 
@@ -88,15 +101,27 @@ automatizado). Procedimento sugerido: TV de 40" ou mais em 1920 × 1080, `/tv` e
 (F11), leitura do NPS, das contagens e de três setores por duas pessoas a 3 m; registrar foto
 datada em `docs/evidencias/` do repositório da API.
 
+## Navegação e acessibilidade
+
+- Estrutura: `<h1>` no cabeçalho, `<h2>` por cartão (`aria-labelledby`) e `<main>`; mensagens de
+  carregamento e de falha com `role="status"` e `role="alert"`.
+- O link "Voltar à página principal" é o único elemento interativo da tela: o teste de componente e o
+  E2E exigem exatamente um link (`href="/painel"`) e nenhum `nav`, `button`, `form`, `input`,
+  `select` ou `textarea`.
+- Ícones decorativos com `aria-hidden`; o significado nunca depende só da cor (texto e ícone, RNF08).
+- O gráfico é um SVG sem texto; a série completa é oferecida aos leitores de tela em uma tabela.
+- axe (WCAG 2.0/2.1/2.2 A e AA) também em `/tv` (T39, `e2e/acessibilidade.spec.ts`).
+- Fora da TV, o menu administrativo tem o item "TV Wall" (rota `/tv`), visível a todo perfil com menu.
+
 ## Testes
 
-| Caso | Onde                                       | O que comprova                                                                                                                                                                                                           |
-| ---- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| T29  | `src/features/tv-wall/TvWallPage.test.tsx` | só o E42, sem token; nenhum link/menu/botão; campos extras (protocolo, e-mail, equipe) não aparecem; valores do E42                                                                                                      |
-| T29  | `e2e/tv-wall.spec.ts`                      | API real: tráfego só para o E42 sem `Authorization` nem cookies; caminhos do JSON = lista permitida; sem links, e-mail, telefone, protocolo, equipe ou turno; tela = E42 (1440, 360 e 1920 px; Chrome, Firefox e WebKit) |
-| T30  | componente e `e2e/tv-wall.spec.ts`         | API real, hospital exclusivo da TV (`e2e:fixture`): 0 respostas (sem NPS 0); total com 4 suprimido e setor com 4 ausente; com a 5ª, total e setor presentes; outro setor com 4 ausente                                   |
-| T31  | componente                                 | 60 s, falha com os últimos dados, rede e resposta inválida, 429 sem insistir, recuperação, 6 h, recarga adiada com a API fora, aba oculta, temporizadores encerrados                                                     |
-| T31  | `e2e/tv-wall.spec.ts` (`tv-1920`)          | relógio do navegador + 60 s mostra a nova resposta; conexão recusada → aviso com os últimos dados e sem rolagem; recuperação; recarga após 6 h; no DOM: 160/64/32/24 px, todo texto ≥ 24 px e ≥ 7:1, sem rolagem         |
-| T39  | `e2e/acessibilidade.spec.ts`               | axe (WCAG 2.0/2.1/2.2 A e AA) também em `/tv`                                                                                                                                                                            |
+| Caso | Onde                                       | O que comprova                                                                                                                                                                                                                                              |
+| ---- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T29  | `src/features/tv-wall/TvWallPage.test.tsx` | só o E42, sem token; único link = retorno a `/painel`; nenhum menu/botão; campos extras (protocolo, e-mail, equipe) não aparecem; valores do E42                                                                                                            |
+| T29  | `e2e/tv-wall.spec.ts`                      | API real: tráfego só para o E42 sem `Authorization` nem cookies; caminhos do JSON = lista permitida; sem outros links além do retorno a `/painel`, e-mail, telefone, protocolo, equipe ou turno; tela = E42 (1440, 360 e 1920 px; Chrome, Firefox e WebKit) |
+| T30  | componente e `e2e/tv-wall.spec.ts`         | API real, hospital exclusivo da TV (`e2e:fixture`): 0 respostas (sem NPS 0); total com 4 suprimido e setor com 4 ausente; com a 5ª, total e setor presentes; outro setor com 4 ausente                                                                      |
+| T31  | componente                                 | 60 s, falha com os últimos dados, rede e resposta inválida, 429 sem insistir, recuperação, 6 h, recarga adiada com a API fora, aba oculta, temporizadores encerrados                                                                                        |
+| T31  | `e2e/tv-wall.spec.ts` (`tv-1920`)          | relógio do navegador + 60 s mostra a nova resposta; conexão recusada → aviso com os últimos dados e sem rolagem; recuperação; recarga após 6 h; no DOM: 160/64/32/24 px, todo texto ≥ 24 px e ≥ 7:1, sem rolagem                                            |
+| T39  | `e2e/acessibilidade.spec.ts`               | axe (WCAG 2.0/2.1/2.2 A e AA) também em `/tv`                                                                                                                                                                                                               |
 
 Resultados das execuções: README deste repositório e `docs/plano-e-relatorio-de-testes.md` da API.

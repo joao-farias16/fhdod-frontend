@@ -5,7 +5,7 @@
  * T30 — sem respostas (NPS nunca 0); total com 4 respostas suprimido e setor com 4 ausente; com a
  *       5ª, total e setor presentes; outro setor com 4 ausente (RF60, RF71), relógio + 60 s.
  * T29 — /tv pública: tráfego só para o E42, sem token nem cookies, JSON pela lista de campos,
- *       sem links nem dados pessoais, valores iguais aos do E42 (RF68, RF72).
+ *       sem links (exceto o retorno a /painel) nem dados pessoais, valores iguais aos do E42 (RF68, RF72).
  * T31 — nova resposta visível com relógio + 60 s; API indisponível → aviso com os últimos dados;
  *       recuperação; recarga após 6 h; medidas no DOM em 1920 × 1080: tamanhos, contraste 7:1 e
  *       sem rolagem (RF69, RF70). A leitura física a 3 m é verificação manual, fora daqui.
@@ -243,7 +243,7 @@ test('T30 — sem respostas; total e setor com 4 suprimidos; com 5, presentes (r
   consoleErrors.expectClean();
 });
 
-test('T29 — /tv pública: só agregados do E42, sem links nem dados pessoais', async ({
+test('T29 — /tv pública: só agregados do E42, sem outros links nem dados pessoais', async ({
   page,
   request,
 }, testInfo) => {
@@ -269,11 +269,16 @@ test('T29 — /tv pública: só agregados do E42, sem links nem dados pessoais',
   // JSON pela lista de campos permitidos (RF72).
   expect(jsonPaths(shown).filter((path) => !ALLOWED_PATHS.has(path))).toEqual([]);
 
-  // Nenhum link, menu, botão ou campo; nenhum dado pessoal, protocolo, equipe ou turno.
+  // Nenhum menu, botão ou campo; o único link é o retorno a /painel; nenhum dado pessoal,
+  // protocolo, equipe ou turno.
   // (no <body>: o <head> tem o <link rel="icon" href>, que não é navegável).
   await expect(
-    page.locator('body').locator('a, [href], nav, button, form, input, select, textarea'),
+    page.locator('body').locator('nav, button, form, input, select, textarea'),
   ).toHaveCount(0);
+  const links = page.locator('body').locator('a, [href]');
+  await expect(links).toHaveCount(1);
+  await expect(links.first()).toHaveAttribute('href', '/painel');
+  await expect(links.first()).toHaveText('Voltar à página principal');
   const text = await page.locator('body').innerText();
   expect(text).not.toMatch(/[\w.+-]+@[\w-]+\.[\w.]+/); // e-mail
   expect(text).not.toMatch(/\(?\b\d{2}\)?\s?9?\d{4}-?\d{4}\b/); // telefone

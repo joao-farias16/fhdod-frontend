@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router';
 
 import { Alert } from '../../components/ui/Alert';
+import { PageContainer, PageHeader } from '../../components/ui/Page';
 import { ErrorState, Loading } from '../../components/ui/States';
 import { formatLocalDate } from '../../lib/format';
 import { noticeOf } from '../../lib/route-state';
@@ -75,11 +76,10 @@ export function DashboardPage() {
             )}
           </Panel>
         </div>
-        <Panel title="Resultados por setor">
-          <p className="text-sm text-slate-700">
-            Ordenados pelo NPS; setores sem respostas ficam ao final. Selecione um setor para ver
-            perguntas, turnos e equipes.
-          </p>
+        <Panel
+          title="Resultados por setor"
+          description="Ordenados pelo NPS; setores sem respostas ficam ao final. Selecione um setor para ver perguntas, turnos e equipes."
+        >
           {sectors.isPending ? (
             <Loading />
           ) : sectors.isError ? (
@@ -101,32 +101,33 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
+    <PageContainer>
       {notice === undefined ? null : <Alert tone="success">{notice}</Alert>}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Olá, {me.fullName}</h1>
-          <p className="text-slate-700">
+      <PageHeader
+        title={`Olá, ${me.fullName}`}
+        description={
+          <>
             Painel de indicadores · {periodTitle(filters)} · {ROLE_LABELS[me.role]}
             {me.role === 'viewer' ? ' · grupos com menos de 5 respostas ficam ocultos.' : ''}
-          </p>
-          <p className="text-sm text-slate-700">
-            Escopo:{' '}
-            {me.allSectors
-              ? 'todos os setores do hospital.'
-              : me.sectors.length === 0
-                ? 'nenhum setor associado. Procure o superadministrador.'
-                : me.sectors.map((sector, index) => (
-                    <span key={sector.id}>
-                      {index === 0 ? '' : ', '}
-                      <span>{sector.name}</span>
-                      {sector.isActive ? '' : ' (setor desativado)'}
-                    </span>
-                  ))}
-          </p>
-        </div>
-        <ExportButtons filters={filters} />
-      </div>
+          </>
+        }
+        actions={<ExportButtons filters={filters} />}
+      >
+        <p className="text-sm text-slate-600">
+          Escopo:{' '}
+          {me.allSectors
+            ? 'todos os setores do hospital.'
+            : me.sectors.length === 0
+              ? 'nenhum setor associado. Procure o superadministrador.'
+              : me.sectors.map((sector, index) => (
+                  <span key={sector.id}>
+                    {index === 0 ? '' : ', '}
+                    <span>{sector.name}</span>
+                    {sector.isActive ? '' : ' (setor desativado)'}
+                  </span>
+                ))}
+        </p>
+      </PageHeader>
       <DashboardFiltersForm
         key={`${JSON.stringify(filters)}-${String(compare)}`}
         filters={filters}
@@ -139,6 +140,6 @@ export function DashboardPage() {
       <div aria-live="polite" aria-busy={refreshing}>
         {body}
       </div>
-    </div>
+    </PageContainer>
   );
 }

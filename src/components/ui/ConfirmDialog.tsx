@@ -32,7 +32,7 @@ export function ConfirmDialog({
     <Dialog open={open} title={title} description={children} onClose={onClose}>
       <div className="space-y-4">
         {error === null ? null : <Alert tone="error">{error}</Alert>}
-        <div className="flex flex-wrap justify-end gap-3">
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={onClose} data-autofocus>
             Cancelar
           </Button>

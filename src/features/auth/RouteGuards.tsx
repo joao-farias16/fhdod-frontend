@@ -2,6 +2,7 @@ import { ShieldX } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link, Navigate, Outlet, useLocation } from 'react-router';
 
+import { buttonClasses } from '../../components/ui/button-classes';
 import { ErrorState, Loading } from '../../components/ui/States';
 import { useAuth, useMe } from './auth-context';
 import { can, homePathFor } from './auth-types';
@@ -42,16 +43,16 @@ export function RequireAuth() {
 export function ForbiddenPage() {
   const me = useMe();
   return (
-    <div className="mx-auto max-w-xl space-y-4 px-4 py-12 sm:px-6">
-      <h1 className="flex items-center gap-2 text-2xl font-bold">
-        <ShieldX aria-hidden="true" className="size-6 text-danger-700" />
-        Acesso não permitido
-      </h1>
-      <p className="text-slate-700">Seu perfil não tem acesso a esta área.</p>
-      <Link
-        to={homePathFor(me)}
-        className="inline-flex min-h-11 items-center rounded-lg bg-brand-700 px-4 font-medium text-white hover:bg-brand-800"
+    <div className="mx-auto flex max-w-xl flex-col items-center space-y-4 px-4 py-16 text-center sm:px-6">
+      <span
+        aria-hidden="true"
+        className="flex size-14 items-center justify-center rounded-full bg-red-50 text-danger-700"
       >
+        <ShieldX className="size-7" />
+      </span>
+      <h1 className="text-2xl font-bold tracking-tight text-slate-900">Acesso não permitido</h1>
+      <p className="text-slate-600">Seu perfil não tem acesso a esta área.</p>
+      <Link to={homePathFor(me)} className={buttonClasses('primary')}>
         Ir para a tela inicial
       </Link>
     </div>

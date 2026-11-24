@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import { Link } from 'react-router';
 
 import { Button } from '../../components/ui/Button';
+import { buttonClasses } from '../../components/ui/button-classes';
 
 function download(href: string, fileName: string) {
   const link = document.createElement('a');
@@ -60,12 +61,16 @@ export function SurveyQrPanel({
       <div className="space-y-4">
         <dl className="space-y-3 text-sm">
           <div>
-            <dt className="font-medium">Endereço do QR Code (origem QR Code)</dt>
-            <dd className="font-mono break-all text-slate-800">{qrUrl}</dd>
+            <dt className="font-semibold text-slate-800">Endereço do QR Code (origem QR Code)</dt>
+            <dd className="mt-1 rounded-md bg-slate-50 px-2 py-1 font-mono break-all text-slate-800">
+              {qrUrl}
+            </dd>
           </div>
           <div>
-            <dt className="font-medium">Link para compartilhar (origem link)</dt>
-            <dd className="font-mono break-all text-slate-800">{linkUrl}</dd>
+            <dt className="font-semibold text-slate-800">Link para compartilhar (origem link)</dt>
+            <dd className="mt-1 rounded-md bg-slate-50 px-2 py-1 font-mono break-all text-slate-800">
+              {linkUrl}
+            </dd>
           </div>
         </dl>
         <div className="flex flex-wrap gap-3">
@@ -80,7 +85,7 @@ export function SurveyQrPanel({
           <Link
             to={`/admin/pesquisas/${surveyId}/cartaz`}
             target="_blank"
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-neutral-border bg-white px-4 font-medium hover:bg-slate-100"
+            className={buttonClasses('secondary')}
           >
             <Printer aria-hidden="true" className="size-4" />
             Cartaz A4

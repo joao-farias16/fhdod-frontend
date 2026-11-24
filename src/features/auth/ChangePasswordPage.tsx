@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router';
 
 import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
+import { PageContainer } from '../../components/ui/Page';
 import { TextField } from '../../components/ui/Field';
 import { ApiError } from '../../lib/api-client';
 import { useAuth, useMe } from './auth-context';
@@ -85,13 +86,18 @@ export function ChangePasswordPage() {
   });
 
   return (
-    <div className="mx-auto max-w-xl space-y-6 px-4 py-8 sm:px-6">
+    <PageContainer narrow>
       <div className="space-y-2">
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <KeyRound aria-hidden="true" className="size-6 text-brand-700" />
+        <h1 className="flex items-center gap-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-[1.75rem]">
+          <span
+            aria-hidden="true"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700"
+          >
+            <KeyRound className="size-5" />
+          </span>
           {mandatory ? 'Troca obrigatória de senha' : 'Trocar senha'}
         </h1>
-        <p className="text-slate-700">
+        <p className="text-slate-600">
           {mandatory
             ? 'Por segurança, defina uma nova senha antes de continuar. A senha temporária deixa de valer após a troca.'
             : 'Defina uma nova senha para a sua conta.'}
@@ -107,7 +113,7 @@ export function ChangePasswordPage() {
       <form
         noValidate
         onSubmit={(event) => void onSubmit(event)}
-        className="space-y-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+        className="space-y-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
       >
         <TextField
           label="Nova senha"
@@ -121,11 +127,11 @@ export function ChangePasswordPage() {
           })}
         />
 
-        <div>
-          <p id="regras-senha" className="font-medium">
+        <div className="rounded-lg bg-slate-50 p-4">
+          <p id="regras-senha" className="text-sm font-semibold text-slate-800">
             A senha deve:
           </p>
-          <ul aria-describedby="regras-senha" className="mt-2 space-y-1">
+          <ul aria-describedby="regras-senha" className="mt-2 space-y-1.5 text-sm">
             {PASSWORD_RULES.map((rule) => {
               const ok = rule.test(newPassword);
               return (
@@ -158,7 +164,7 @@ export function ChangePasswordPage() {
           })}
         />
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col gap-2 border-t border-slate-200 pt-5 sm:flex-row-reverse sm:justify-start">
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Salvando…' : 'Salvar nova senha'}
           </Button>
@@ -179,6 +185,6 @@ export function ChangePasswordPage() {
           )}
         </div>
       </form>
-    </div>
+    </PageContainer>
   );
 }

@@ -1,4 +1,4 @@
-import { Eye, EyeOff, HeartPulse, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Navigate, useLocation, useNavigate } from 'react-router';
@@ -87,8 +87,13 @@ export function LoginPage() {
       </a>
       <header className="bg-brand-700 text-white">
         <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-4 sm:px-6">
-          <HeartPulse aria-hidden="true" className="size-7" />
-          <span className="text-xl font-bold tracking-tight">FHDOD</span>
+          <img
+            src="/images/logo-fhdod-oficial.png"
+            alt="FHDOD"
+            width="245"
+            height="102"
+            className="h-12 w-auto rounded-md"
+          />
           <span className="hidden text-sm text-brand-100 sm:inline">Área administrativa</span>
         </div>
       </header>

@@ -21,7 +21,7 @@ function admin(pick: (module: AdminArea) => ComponentType) {
 export const routes: RouteObject[] = [
   {
     // ET10: TV Wall (TL15). Pública, fora do layout comum (sem cabeçalho com links, menu ou
-    // rodapé administrativo, RF72), em pedaço próprio e sem o cliente de autenticação.
+    // rodapé administrativo; o único link é o retorno a /painel, RF72), em pedaço próprio e sem o cliente de autenticação.
     path: 'tv',
     lazy: async () => ({
       Component: (await import('../features/tv-wall/TvWallPage')).TvWallPage,

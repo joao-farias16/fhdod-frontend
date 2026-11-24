@@ -62,7 +62,7 @@ export function TemporaryPasswordDialog({
               ? 'Não foi possível copiar; anote a senha.'
               : ''}
         </p>
-        <div className="flex flex-wrap justify-end gap-3">
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={() => void copy()}>
             <Copy aria-hidden="true" className="size-4" />
             Copiar senha

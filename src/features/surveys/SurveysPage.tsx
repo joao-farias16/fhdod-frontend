@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router';
 
 import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
+import { CARD_CLASS, FilterPanel, PageContainer, PageHeader } from '../../components/ui/Page';
 import { Dialog } from '../../components/ui/Dialog';
 import { SelectField, TextField } from '../../components/ui/Field';
 import { EmptyState, ErrorState, Loading, Pagination } from '../../components/ui/States';
@@ -137,7 +138,7 @@ function CreateSurveyDialog({ onClose }: { onClose: () => void }) {
           maxLength={500}
           {...register('thankYouMessage')}
         />
-        <div className="flex flex-wrap justify-end gap-3 pt-2">
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
@@ -162,32 +163,27 @@ export function SurveysPage() {
   const meta = surveys.data?.meta;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Pesquisas</h1>
-          <p className="text-slate-700">
-            Configuração, publicação de versões, link e QR Code por setor.
-          </p>
-        </div>
-        <Button
-          onClick={() => {
-            setCreating(true);
-          }}
-        >
-          <Plus aria-hidden="true" className="size-5" />
-          Nova pesquisa
-        </Button>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Pesquisas"
+        description="Configuração, publicação de versões, link e QR Code por setor."
+        actions={
+          <Button
+            onClick={() => {
+              setCreating(true);
+            }}
+          >
+            <Plus aria-hidden="true" className="size-5" />
+            Nova pesquisa
+          </Button>
+        }
+      />
 
-      <form
-        role="search"
-        aria-label="Filtros de pesquisas"
-        noValidate
+      <FilterPanel
+        label="Filtros de pesquisas"
         onSubmit={(event) => {
           event.preventDefault();
         }}
-        className="grid gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-3"
       >
         <SelectField
           label="Setor"
@@ -219,13 +215,15 @@ export function SurveysPage() {
         </SelectField>
         <TextField
           label="Buscar por título ou endereço"
+          type="search"
+          fieldClassName="sm:col-span-2"
           value={filters.search}
           maxLength={120}
           onChange={(event) => {
             setFilters({ ...filters, search: event.target.value, page: 1 });
           }}
         />
-      </form>
+      </FilterPanel>
 
       <section aria-labelledby="lista-pesquisas" className="space-y-4">
         <h2 id="lista-pesquisas" className="sr-only">
@@ -244,7 +242,7 @@ export function SurveysPage() {
             {list.map((survey) => (
               <li
                 key={survey.id}
-                className="space-y-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                className={`${CARD_CLASS} flex flex-col gap-2 p-5 transition-colors hover:border-slate-300`}
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <Tag tone={STATUS_TONES[survey.status]}>{STATUS_LABELS[survey.status]}</Tag>
@@ -254,7 +252,7 @@ export function SurveysPage() {
                 </div>
                 <Link
                   to={`/admin/pesquisas/${survey.id}`}
-                  className="block text-lg font-semibold text-brand-700 underline-offset-4 hover:underline"
+                  className="block text-lg leading-snug font-semibold text-brand-700 underline-offset-4 hover:text-brand-800 hover:underline"
                 >
                   {survey.title}
                 </Link>
@@ -290,6 +288,6 @@ export function SurveysPage() {
           }}
         />
       ) : null}
-    </div>
+    </PageContainer>
   );
 }

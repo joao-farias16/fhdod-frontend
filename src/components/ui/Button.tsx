@@ -1,20 +1,9 @@
 import type { ButtonHTMLAttributes } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
-
-const VARIANTS: Record<Variant, string> = {
-  // Tabela 22 (identidade FHDOD): primário vermelho #C8102E com texto branco (5,88:1); secundário
-  // com borda #6B7280;
-  // perigo vermelho-escuro #991B1B (8,31:1), sempre com confirmação.
-  primary: 'bg-brand-700 text-white hover:bg-brand-800 disabled:bg-brand-700/60',
-  secondary:
-    'border border-neutral-border bg-white text-slate-900 hover:bg-slate-100 disabled:text-slate-500',
-  danger: 'bg-danger-700 text-white hover:bg-danger-800 disabled:bg-danger-700/60',
-  ghost: 'text-brand-700 hover:bg-brand-50 disabled:text-slate-500',
-};
+import { buttonClasses, type ButtonVariant } from './button-classes';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: Variant;
+  variant?: ButtonVariant;
 }
 
 /** Botão com alvo mínimo de 44 × 44 px (RNF05) e foco visível global (RNF07). */
@@ -24,11 +13,5 @@ export function Button({
   type = 'button',
   ...props
 }: ButtonProps) {
-  return (
-    <button
-      type={type}
-      className={`inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg px-4 font-medium transition-colors disabled:cursor-not-allowed ${VARIANTS[variant]} ${className}`}
-      {...props}
-    />
-  );
+  return <button type={type} className={buttonClasses(variant, className)} {...props} />;
 }

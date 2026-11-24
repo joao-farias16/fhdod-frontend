@@ -3,7 +3,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 
 import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
-import { TextField } from '../../components/ui/Field';
+import { TEXTAREA_CLASS, TextField } from '../../components/ui/Field';
 import { ApiError } from '../../lib/api-client';
 import {
   CONTACT_PURPOSE_TEXT,
@@ -192,7 +192,7 @@ export function ManifestationForm({ submitted, onCreated, onCancel }: Manifestat
           onChange={(event) => {
             set('description', event.target.value);
           }}
-          className="block w-full rounded-lg border border-neutral-border bg-white p-3 text-lg aria-invalid:border-danger-700"
+          className={`${TEXTAREA_CLASS} text-lg`}
         />
         <p id={`${ids}-descricao-dica`} className="text-sm text-slate-700">
           De 10 a 2.000 caracteres. Restam {remaining.toLocaleString('pt-BR')}.

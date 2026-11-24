@@ -159,8 +159,10 @@ export function UserFormDialog({
 
         {editing ? (
           <div>
-            <p className="font-medium">E-mail</p>
-            <p className="text-slate-700">{user.email}</p>
+            <p className="text-sm font-semibold text-slate-800">E-mail</p>
+            <p className="mt-1.5 rounded-lg bg-slate-50 px-3 py-2.5 break-all text-slate-700">
+              {user.email}
+            </p>
           </div>
         ) : (
           <TextField
@@ -206,13 +208,15 @@ export function UserFormDialog({
         ) : null}
 
         {chooseScope && !isSelf ? (
-          <fieldset className="space-y-2">
-            <legend className="font-medium">Escopo de setores</legend>
-            <label className="flex min-h-11 items-center gap-3">
+          <fieldset className="grid gap-2 sm:grid-cols-2">
+            <legend className="mb-1.5 text-sm font-semibold text-slate-800">
+              Escopo de setores
+            </legend>
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-slate-300 bg-white px-3 py-2 transition-colors hover:border-slate-500 has-checked:border-brand-700 has-checked:bg-brand-50">
               <input type="radio" value="all" className="size-5" {...register('scope')} />
               Todos os setores
             </label>
-            <label className="flex min-h-11 items-center gap-3">
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-slate-300 bg-white px-3 py-2 transition-colors hover:border-slate-500 has-checked:border-brand-700 has-checked:bg-brand-50">
               <input type="radio" value="sectors" className="size-5" {...register('scope')} />
               Setores específicos
             </label>
@@ -224,15 +228,20 @@ export function UserFormDialog({
             className="space-y-2"
             aria-describedby={errors.sectorIds ? 'erro-setores' : undefined}
           >
-            <legend className="font-medium">Setores associados</legend>
+            <legend className="mb-1.5 text-sm font-semibold text-slate-800">
+              Setores associados
+            </legend>
             {sectors.isPending ? (
               <Loading label="Carregando setores…" />
             ) : options.length === 0 ? (
               <p className="text-slate-700">Nenhum setor ativo disponível.</p>
             ) : (
-              <div className="grid gap-1 sm:grid-cols-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 {options.map((sector) => (
-                  <label key={sector.id} className="flex min-h-11 items-center gap-3">
+                  <label
+                    key={sector.id}
+                    className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-slate-300 bg-white px-3 py-2 transition-colors hover:border-slate-500 has-checked:border-brand-700 has-checked:bg-brand-50"
+                  >
                     <input
                       type="checkbox"
                       value={sector.id}
@@ -255,7 +264,7 @@ export function UserFormDialog({
           </fieldset>
         ) : null}
 
-        <div className="flex flex-wrap justify-end gap-3 pt-2">
+        <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>

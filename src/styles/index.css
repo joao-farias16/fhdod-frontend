@@ -64,4 +64,165 @@
   header :focus-visible {
     @apply outline-white;
   }
+
+  /* Caixas de seleção e opções de rádio na cor da identidade, em todo o sistema. */
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--color-brand-700);
+  }
+
+  /* Campos de data e hora sempre no tema claro (o ícone do calendário segue o contraste). */
+  input[type='date'],
+  input[type='time'] {
+    color-scheme: light;
+  }
+}
+
+/*
+ * Seleção personalizável (SelectField): nos navegadores que aceitam `appearance: base-select`, a
+ * lista de opções deixa de ser a do sistema e segue a identidade — borda, sombra e cantos dos
+ * cartões, opção em foco e opção escolhida em vermelho-claro com marca. Teclado (setas, Home/End,
+ * digitação), leitores de tela e celulares continuam com o comportamento nativo do <select>. Nos
+ * demais navegadores nada muda: a lista é a do sistema.
+ */
+@supports (appearance: base-select) {
+  select.fhdod-select,
+  select.fhdod-select::picker(select) {
+    appearance: base-select;
+  }
+
+  select.fhdod-select {
+    display: flex;
+    align-items: center;
+  }
+
+  /* A seta é desenhada pelo componente (gira ao abrir). */
+  select.fhdod-select::picker-icon {
+    display: none;
+  }
+
+  select.fhdod-select::picker(select) {
+    margin-block: 4px;
+    max-height: min(22rem, 60dvh);
+    padding: 4px;
+    overflow-y: auto;
+    border: 1px solid var(--color-slate-300);
+    border-radius: var(--radius-lg);
+    background: var(--color-white);
+    box-shadow:
+      0 10px 15px -3px rgb(15 23 42 / 0.12),
+      0 4px 6px -4px rgb(15 23 42 / 0.1);
+  }
+
+  select.fhdod-select option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    color: var(--color-slate-900);
+    font-size: var(--text-base);
+    cursor: pointer;
+  }
+
+  select.fhdod-select option:hover {
+    background: var(--color-slate-100);
+  }
+
+  /* RNF07: a opção em foco pelo teclado mantém o contorno de 2 px. */
+  select.fhdod-select option:focus-visible {
+    background: var(--color-slate-100);
+    outline: 2px solid var(--color-brand-700);
+    outline-offset: -2px;
+  }
+
+  select.fhdod-select option:checked {
+    background: var(--color-brand-50);
+    color: var(--color-brand-800);
+    font-weight: 600;
+  }
+
+  select.fhdod-select option::checkmark {
+    order: 1;
+    margin-left: auto;
+    color: var(--color-brand-700);
+  }
+
+  select.fhdod-select option:disabled {
+    color: var(--color-slate-400);
+    cursor: not-allowed;
+  }
+}
+
+/*
+ * Tabelas empilhadas no celular (STACK_TABLE_CLASS, components/ui/Table.tsx). Fora das camadas do
+ * Tailwind de propósito: estas regras precisam vencer as larguras mínimas das tabelas.
+ */
+@media (max-width: 767.98px) {
+  table.table-stack {
+    min-width: 0;
+  }
+
+  table.table-stack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  table.table-stack,
+  table.table-stack tbody,
+  table.table-stack tr,
+  table.table-stack td {
+    display: block;
+    width: 100%;
+  }
+
+  table.table-stack tr {
+    padding: 12px 16px;
+  }
+
+  table.table-stack td {
+    max-width: none;
+    min-width: 0;
+    padding: 4px 0;
+    text-align: left;
+    white-space: normal;
+  }
+
+  table.table-stack td[data-label] {
+    display: grid;
+    grid-template-columns: minmax(6.5rem, 34%) minmax(0, 1fr);
+    gap: 12px;
+    align-items: baseline;
+  }
+
+  /* Valores com mais de um elemento ficam todos na segunda coluna, um abaixo do outro. */
+  table.table-stack td[data-label] > * {
+    grid-column: 2;
+  }
+
+  table.table-stack td[data-label]::before {
+    content: attr(data-label);
+    color: var(--color-slate-600);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+  }
+
+  table.table-stack td[data-actions] {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--color-slate-200);
+  }
+
+  table.table-stack td[data-actions] > * {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
 }

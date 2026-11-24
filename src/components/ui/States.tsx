@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, LoaderCircle, RotateCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Inbox, LoaderCircle, RotateCw } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { ApiError } from '../../lib/api-client';
@@ -8,8 +8,8 @@ import { Button } from './Button';
 /** Estado de carregamento anunciado a leitores de tela (Tabela 22). */
 export function Loading({ label = 'Carregando…' }: { label?: string }) {
   return (
-    <p role="status" className="flex items-center gap-2 py-6 text-slate-700">
-      <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />
+    <p role="status" className="flex items-center justify-center gap-2 py-10 text-slate-700">
+      <LoaderCircle aria-hidden="true" className="size-5 animate-spin text-brand-700" />
       {label}
     </p>
   );
@@ -43,9 +43,17 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
 /** Estado vazio com ação (Tabela 22). */
 export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="rounded-xl border border-dashed border-neutral-border bg-white p-6 text-center">
-      <p className="font-semibold">{title}</p>
-      {children === undefined ? null : <div className="mt-2 text-slate-700">{children}</div>}
+    <div className="flex flex-col items-center rounded-xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+      <span
+        aria-hidden="true"
+        className="mb-3 flex size-12 items-center justify-center rounded-full bg-slate-100 text-slate-500"
+      >
+        <Inbox className="size-6" />
+      </span>
+      <p className="font-semibold text-slate-900">{title}</p>
+      {children === undefined ? null : (
+        <div className="mt-1 max-w-md text-slate-600">{children}</div>
+      )}
     </div>
   );
 }
@@ -63,11 +71,14 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
   const first = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const last = Math.min(total, page * pageSize);
   return (
-    <nav aria-label="Paginação" className="flex flex-wrap items-center justify-between gap-3">
+    <nav
+      aria-label="Paginação"
+      className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+    >
       <p className="text-sm text-slate-700">
         {total === 0 ? 'Nenhum registro' : `Exibindo ${first}–${last} de ${total}`}
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2 sm:justify-end">
         <Button
           variant="secondary"
           onClick={() => {
@@ -78,7 +89,7 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
           <ChevronLeft aria-hidden="true" className="size-4" />
           Anterior
         </Button>
-        <span className="text-sm text-slate-700">
+        <span className="px-1 text-sm font-medium whitespace-nowrap text-slate-700">
           Página {page} de {pages}
         </span>
         <Button

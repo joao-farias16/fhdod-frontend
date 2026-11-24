@@ -1,6 +1,13 @@
-import { CircleAlert, Clock, HeartPulse, LoaderCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChartNoAxesColumn,
+  CircleAlert,
+  Clock,
+  LoaderCircle,
+  QrCode,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 
 import { TvTrendChart } from './TvTrendChart';
 import {
@@ -32,6 +39,9 @@ const NUMBER = 'text-4xl tv:text-tv-number';
 const LABEL = 'text-2xl tv:text-tv-label';
 const SMALL = 'text-lg tv:text-tv-small';
 
+/** Cartão branco da TV: bordas e sombra leves sobre o fundo cinza-claro. */
+const PANEL = 'rounded-2xl border border-slate-200 bg-white shadow-sm';
+
 /** Texto institucional fixo (convite da TL15); não depende de dados. */
 const INVITATION = 'Sua opinião melhora o nosso atendimento.';
 const INVITATION_DETAIL = 'Avalie o setor em que você foi atendido pelo QR Code do cartaz.';
@@ -43,19 +53,34 @@ function reloadPage() {
 function Header({ summary }: { summary: TvWallSummary | undefined }) {
   return (
     <header className="bg-brand-800 text-white">
-      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-2 px-6 py-4 tv:px-8">
-        <h1 className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <HeartPulse aria-hidden="true" className="size-10 shrink-0 tv:size-12" />
-          <span className={`${LABEL} font-bold tracking-tight`} data-tv-size="label">
-            FHDOD
-          </span>
-          <span className={SMALL} data-tv-size="small">
+      <div className="px-6 pt-2 tv:px-10">
+        <Link
+          to="/painel"
+          className="inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white tv:text-tv-small"
+        >
+          <ArrowLeft aria-hidden="true" className="size-4 shrink-0 tv:size-6" />
+          Voltar à página principal
+        </Link>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3 px-6 py-3 tv:px-10">
+        <h1 className="flex flex-wrap items-center gap-x-5 gap-y-1">
+          <img
+            src="/images/logo-fhdod-oficial.png"
+            alt="FHDOD"
+            width="245"
+            height="102"
+            className="h-14 w-auto shrink-0 rounded-md sm:h-16 tv:h-20"
+          />
+          <span
+            className={`${LABEL} font-semibold sm:border-l-2 sm:border-white/40 sm:pl-5`}
+            data-tv-size="label"
+          >
             Experiência do Paciente
           </span>
         </h1>
         {summary === undefined ? null : (
           <div className="text-left sm:text-right">
-            <p className={`${LABEL} font-semibold`} data-tv-size="label">
+            <p className={`${LABEL} font-bold`} data-tv-size="label">
               {PERIOD_LABELS[summary.period.key]}
             </p>
             <p className={SMALL} data-tv-size="small">
@@ -84,16 +109,16 @@ function StatusBanner({
   return (
     <div
       role="alert"
-      className={`flex items-center gap-4 border-l-8 px-6 py-2 tv:px-8 ${
+      className={`flex items-center gap-4 border-b-2 px-6 py-2 tv:px-10 ${
         failed
           ? 'border-danger-700 bg-red-50 text-red-950'
           : 'border-amber-700 bg-amber-50 text-amber-950'
       }`}
     >
       {failed ? (
-        <CircleAlert aria-hidden="true" className="size-9 shrink-0" />
+        <CircleAlert aria-hidden="true" className="size-9 shrink-0 text-danger-700" />
       ) : (
-        <Clock aria-hidden="true" className="size-9 shrink-0" />
+        <Clock aria-hidden="true" className="size-9 shrink-0 text-amber-800" />
       )}
       <p className={SMALL} data-tv-size="small">
         <strong className={`${LABEL} font-bold`} data-tv-size="label">
@@ -105,7 +130,10 @@ function StatusBanner({
   );
 }
 
-/** NPS geral, total de respostas e percentuais (RF68), respeitando a supressão (RF71). */
+/**
+ * NPS geral, total de respostas e percentuais (RF68), respeitando a supressão (RF71): o NPS em
+ * destaque com o total ao lado e, abaixo, promotores e detratores em dois cartões.
+ */
 function HospitalIndicators({ overall }: { overall: TvWallOverall }) {
   const noResponses = !overall.suppressed && overall.n === 0;
   const caption = overall.suppressed
@@ -114,58 +142,83 @@ function HospitalIndicators({ overall }: { overall: TvWallOverall }) {
       ? 'sem respostas'
       : undefined;
   return (
-    <section aria-labelledby="tv-hospital" className="grid gap-6 sm:grid-cols-[1fr_auto]">
-      <div className="min-w-0 space-y-2">
+    <section aria-labelledby="tv-hospital" className="flex flex-col gap-6">
+      <div className={`${PANEL} border-t-8 border-t-brand-800 p-6 tv:px-8`}>
         <h2 id="tv-hospital" className={`${LABEL} font-bold`} data-tv-size="label">
           NPS geral do hospital
         </h2>
-        {overall.suppressed ? (
-          <>
-            <p className={`${NUMBER} font-bold`} data-tv-size="number" data-tv-value="nps">
-              Menos de 5 respostas
-            </p>
-            <p className={SMALL} data-tv-size="small">
-              O resultado aparece a partir de 5 respostas no período.
-            </p>
-          </>
-        ) : overall.nps === null ? (
-          <p className={`${NUMBER} font-bold`} data-tv-size="number" data-tv-value="nps">
-            Sem respostas no período
-          </p>
-        ) : (
-          <p
-            className={`${HERO} font-extrabold tracking-tight tabular-nums`}
-            data-tv-size="hero"
-            data-tv-value="nps"
-          >
-            {tvNumber(overall.nps)}
-          </p>
-        )}
-        {overall.n === null ? null : (
-          <p className="flex flex-wrap items-baseline gap-x-3">
-            <span
-              className={`${NUMBER} font-bold tabular-nums`}
-              data-tv-size="number"
-              data-tv-value="n"
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
+          <div className="min-w-0">
+            {overall.suppressed ? (
+              <>
+                <p
+                  className={`${NUMBER} font-bold text-slate-900`}
+                  data-tv-size="number"
+                  data-tv-value="nps"
+                >
+                  Menos de 5 respostas
+                </p>
+                <p className={`${SMALL} mt-2 text-slate-700`} data-tv-size="small">
+                  O resultado aparece a partir de 5 respostas no período.
+                </p>
+              </>
+            ) : overall.nps === null ? (
+              <p
+                className={`${NUMBER} font-bold text-slate-900`}
+                data-tv-size="number"
+                data-tv-value="nps"
+              >
+                Sem respostas no período
+              </p>
+            ) : (
+              <p
+                className={`${HERO} font-extrabold tracking-tight text-slate-900 tabular-nums`}
+                data-tv-size="hero"
+                data-tv-value="nps"
+              >
+                {tvNumber(overall.nps)}
+              </p>
+            )}
+          </div>
+          {overall.n === null ? null : (
+            <p
+              className={
+                overall.nps === null
+                  ? 'flex w-full flex-wrap items-baseline gap-x-4'
+                  : 'flex flex-col items-start border-slate-200 sm:items-end sm:border-l-2 sm:pl-10 sm:text-right'
+              }
             >
-              {tvNumber(overall.n, 0)}
-            </span>
-            <span className={LABEL} data-tv-size="label">
-              {overall.n === 1 ? 'resposta considerada' : 'respostas consideradas'}
-            </span>
-          </p>
-        )}
+              <span
+                className={`${NUMBER} font-bold text-slate-900 tabular-nums`}
+                data-tv-size="number"
+                data-tv-value="n"
+              >
+                {tvNumber(overall.n, 0)}
+              </span>
+              <span className={`${LABEL} text-slate-700`} data-tv-size="label">
+                {overall.n === 1 ? 'resposta considerada' : 'respostas consideradas'}
+              </span>
+            </p>
+          )}
+        </div>
       </div>
 
-      <dl className="grid content-start gap-4">
+      <dl className="grid gap-6 sm:grid-cols-2">
         {(
           [
             ['Promotores', 'notas 9 e 10', overall.promotersPercent, 'promoters'],
             ['Detratores', 'notas 0 a 6', overall.detractorsPercent, 'detractors'],
           ] as const
         ).map(([label, detail, value, key]) => (
-          <div key={key}>
-            <dt className="flex flex-wrap items-baseline gap-x-3">
+          <div
+            key={key}
+            className={`${PANEL} flex gap-x-4 px-6 py-4 tv:px-8 ${
+              caption === undefined
+                ? 'flex-wrap items-center justify-between gap-y-1'
+                : 'flex-col items-start gap-y-2'
+            }`}
+          >
+            <dt className="flex flex-col">
               <span className={`${LABEL} font-semibold`} data-tv-size="label">
                 {label}
               </span>
@@ -173,7 +226,13 @@ function HospitalIndicators({ overall }: { overall: TvWallOverall }) {
                 {detail}
               </span>
             </dt>
-            <dd className="flex flex-wrap items-baseline gap-x-3">
+            <dd
+              className={
+                caption === undefined
+                  ? 'flex flex-col items-end text-right'
+                  : 'flex flex-wrap items-baseline gap-x-4'
+              }
+            >
               <span
                 className={`${NUMBER} font-bold tabular-nums`}
                 data-tv-size="number"
@@ -197,16 +256,22 @@ function HospitalIndicators({ overall }: { overall: TvWallOverall }) {
 /** Até 8 setores com 5 respostas ou mais, na ordem do E42 (RF68, RF71). */
 function SectorList({ sectors, overall }: { sectors: TvWallSector[]; overall: TvWallOverall }) {
   return (
-    <section aria-labelledby="tv-setores" className="flex min-w-0 flex-col gap-3">
+    <section
+      aria-labelledby="tv-setores"
+      className={`${PANEL} flex min-h-0 min-w-0 flex-col gap-3 p-6 tv:px-8`}
+    >
       <h2 id="tv-setores" className={`${LABEL} font-bold`} data-tv-size="label">
         NPS por setor
       </h2>
       {sectors.length === 0 ? (
-        <p className={`${LABEL} rounded-lg bg-slate-100 p-6`} data-tv-size="label">
-          {overall.n === 0
-            ? 'Nenhuma resposta no período.'
-            : 'Nenhum setor com 5 respostas ou mais no período.'}
-        </p>
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+          <ChartNoAxesColumn aria-hidden="true" className="size-12 text-slate-600 tv:size-16" />
+          <p className={`${LABEL} font-semibold text-slate-900`} data-tv-size="label">
+            {overall.n === 0
+              ? 'Nenhuma resposta no período.'
+              : 'Nenhum setor com 5 respostas ou mais no período.'}
+          </p>
+        </div>
       ) : (
         <table className="w-full table-fixed border-collapse">
           <caption className="sr-only">
@@ -227,10 +292,10 @@ function SectorList({ sectors, overall }: { sectors: TvWallSector[]; overall: Tv
           </thead>
           <tbody>
             {sectors.map((sector) => (
-              <tr key={sector.name} className="border-b-2 border-slate-200 last:border-b-0">
-                <th scope="row" className="py-1 pr-4 text-left">
+              <tr key={sector.name} className="border-b-2 border-slate-100 last:border-b-0">
+                <th scope="row" className="py-0.5 pr-4 text-left">
                   <span
-                    className={`${LABEL} block truncate font-semibold`}
+                    className={`${LABEL} block font-semibold break-words lg:truncate`}
                     title={sector.name}
                     data-tv-size="label"
                     data-tv-sector={sector.name}
@@ -245,7 +310,7 @@ function SectorList({ sectors, overall }: { sectors: TvWallSector[]; overall: Tv
                   </span>
                 </th>
                 <td
-                  className={`${NUMBER} py-1 text-right align-middle font-bold tabular-nums`}
+                  className={`${NUMBER} py-0.5 text-right align-middle font-bold tabular-nums`}
                   data-tv-size="number"
                   data-tv-value="sector-nps"
                 >
@@ -256,7 +321,10 @@ function SectorList({ sectors, overall }: { sectors: TvWallSector[]; overall: Tv
           </tbody>
         </table>
       )}
-      <p className={`${SMALL} text-slate-700`} data-tv-size="small">
+      <p
+        className={`${SMALL} mt-auto border-t-2 border-slate-100 pt-3 text-slate-700`}
+        data-tv-size="small"
+      >
         Setores com menos de 5 respostas não aparecem, para proteger o anonimato.
       </p>
     </section>
@@ -265,14 +333,17 @@ function SectorList({ sectors, overall }: { sectors: TvWallSector[]; overall: Tv
 
 function Footer() {
   return (
-    <footer className="bg-slate-100">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-1 px-6 py-3 tv:px-8">
-        <p className={SMALL} data-tv-size="small">
-          <strong className={`${LABEL} font-bold`} data-tv-size="label">
-            {INVITATION}
-          </strong>{' '}
-          {INVITATION_DETAIL}
-        </p>
+    <footer className="border-t-4 border-brand-800 bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-2 px-6 py-3 tv:px-10">
+        <div className="flex min-w-0 items-center gap-4">
+          <QrCode aria-hidden="true" className="size-12 shrink-0 text-brand-800 tv:size-14" />
+          <p className={`${SMALL} text-slate-800`} data-tv-size="small">
+            <strong className={`${LABEL} block font-bold text-slate-900`} data-tv-size="label">
+              {INVITATION}
+            </strong>
+            {INVITATION_DETAIL}
+          </p>
+        </div>
         <p className={`${SMALL} text-slate-700`} data-tv-size="small">
           Ambiente acadêmico — dados fictícios.
         </p>
@@ -281,22 +352,31 @@ function Footer() {
   );
 }
 
-function CenteredMessage({ children, alert }: { children: ReactNode; alert?: boolean }) {
+function CenteredMessage({
+  children,
+  icon,
+  alert,
+}: {
+  children: ReactNode;
+  icon: ReactNode;
+  alert?: boolean;
+}) {
   return (
     <div className="flex flex-1 items-center justify-center p-8">
-      <p
-        role={alert === true ? 'alert' : 'status'}
-        className={`${LABEL} flex max-w-4xl items-center gap-4 text-center`}
-        data-tv-size="label"
+      <div
+        className={`${PANEL} flex max-w-4xl flex-col items-center gap-5 px-10 py-12 text-center`}
       >
-        {children}
-      </p>
+        {icon}
+        <p role={alert === true ? 'alert' : 'status'} className={LABEL} data-tv-size="label">
+          {children}
+        </p>
+      </div>
     </div>
   );
 }
 
 /**
- * TL15 — TV Wall (`/tv`, ET10): tela pública para TV, sem menu, sem links e sem sessão (RF72).
+ * TL15 — TV Wall (`/tv`, ET10): tela pública para TV, sem menu, sem sessão e sem outros links além do retorno a `/painel` (RF72).
  * Consome somente o E42 (RF68), a cada 60 s (RF69), mantendo os últimos dados válidos em falha e
  * recarregando a página a cada 6 h. `reload` é injetável para os testes.
  */
@@ -314,19 +394,29 @@ export function TvWallPage({ reload = reloadPage }: { reload?: () => void }) {
   const stale = summary !== undefined && now - query.dataUpdatedAt > TV_STALE_AFTER_MS;
 
   return (
-    <div className="flex min-h-dvh flex-col bg-white text-slate-900 tv:h-dvh">
+    <div className="flex min-h-dvh flex-col bg-slate-100 text-slate-900 tv:h-dvh">
       <Header summary={summary} />
       {summary === undefined ? (
         <main className="flex flex-1 flex-col">
           {query.isError ? (
-            <CenteredMessage alert>
-              <CircleAlert aria-hidden="true" className="size-10 shrink-0 text-danger-700" />
+            <CenteredMessage
+              alert
+              icon={
+                <CircleAlert aria-hidden="true" className="size-14 text-danger-700 tv:size-16" />
+              }
+            >
               Não foi possível carregar os indicadores. Uma nova tentativa é feita automaticamente a
               cada minuto.
             </CenteredMessage>
           ) : (
-            <CenteredMessage>
-              <LoaderCircle aria-hidden="true" className="size-10 shrink-0 animate-spin" />
+            <CenteredMessage
+              icon={
+                <LoaderCircle
+                  aria-hidden="true"
+                  className="size-14 animate-spin text-brand-800 tv:size-16"
+                />
+              }
+            >
               Carregando os indicadores…
             </CenteredMessage>
           )}
@@ -334,10 +424,15 @@ export function TvWallPage({ reload = reloadPage }: { reload?: () => void }) {
       ) : (
         <>
           <StatusBanner failed={query.isError} stale={stale} summary={summary} />
-          <main className="grid min-h-0 flex-1 gap-x-12 gap-y-8 px-6 py-6 lg:grid-cols-2 tv:px-8">
-            <div className="flex min-w-0 flex-col gap-6">
+          <main className="grid min-h-0 flex-1 gap-6 px-4 py-5 sm:px-6 lg:grid-cols-2 tv:gap-8 tv:px-10 tv:py-6">
+            <div className="flex min-h-0 min-w-0 flex-col gap-6">
               <HospitalIndicators overall={summary.overall} />
-              <TvTrendChart points={summary.trend.points} granularity={summary.trend.granularity} />
+              <div className={`${PANEL} flex min-h-0 flex-1 flex-col p-6 tv:px-8`}>
+                <TvTrendChart
+                  points={summary.trend.points}
+                  granularity={summary.trend.granularity}
+                />
+              </div>
             </div>
             <SectorList sectors={summary.sectors} overall={summary.overall} />
           </main>

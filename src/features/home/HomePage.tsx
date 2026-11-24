@@ -1,3 +1,7 @@
+import { LogIn } from 'lucide-react';
+import { Link } from 'react-router';
+
+import { buttonClasses } from '../../components/ui/button-classes';
 import { ApiStatusCard } from './ApiStatusCard';
 
 /** Página inicial da base técnica (ET01): identifica o sistema e mostra a situação da API. */
@@ -15,6 +19,12 @@ export function HomePage() {
           Pesquisa de satisfação por setor, acompanhamento de manifestações pela Ouvidoria e
           indicadores para a gestão, com coleta mínima de dados e privacidade.
         </p>
+        <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:flex-wrap">
+          <Link to="/login" className={buttonClasses('primary', 'w-full px-5 sm:w-auto')}>
+            <LogIn aria-hidden="true" className="size-5 shrink-0" />
+            Entrar no sistema
+          </Link>
+        </div>
       </section>
 
       <div className="grid gap-4 md:grid-cols-2">

@@ -1,9 +1,10 @@
-import { Rocket } from 'lucide-react';
+import { ArrowLeft, Rocket } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router';
 
 import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
+import { PageContainer, PageHeader } from '../../components/ui/Page';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { ErrorState, Loading } from '../../components/ui/States';
 import { Tag } from '../../components/ui/Tag';
@@ -59,31 +60,23 @@ export function SurveyEditorPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6">
-      <div className="space-y-3">
-        <Link
-          to="/admin/pesquisas"
-          className="font-medium text-brand-700 underline-offset-4 hover:underline"
-        >
-          ← Pesquisas
-        </Link>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <Tag tone={STATUS_TONES[data.status]}>{STATUS_LABELS[data.status]}</Tag>
-              {data.hasUnpublishedChanges && data.currentVersion !== null ? (
-                <span className="text-sm text-slate-700">Há alterações não publicadas</span>
-              ) : null}
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight">{data.title}</h1>
-            <p className="text-slate-700">
-              {data.sectorName}
-              {data.currentVersion === null
-                ? ' · ainda não publicada'
-                : ` · versão ${data.currentVersion.versionNumber} vigente`}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
+    <PageContainer>
+      <Link
+        to="/admin/pesquisas"
+        className="-my-2 inline-flex min-h-11 items-center gap-2 rounded-md font-medium text-brand-700 hover:text-brand-800 hover:underline"
+      >
+        <ArrowLeft aria-hidden="true" className="size-4" />
+        Pesquisas
+      </Link>
+      <PageHeader
+        title={data.title}
+        description={`${data.sectorName}${
+          data.currentVersion === null
+            ? ' · ainda não publicada'
+            : ` · versão ${data.currentVersion.versionNumber} vigente`
+        }`}
+        actions={
+          <>
             <Button
               variant="secondary"
               onClick={() => {
@@ -108,24 +101,31 @@ export function SurveyEditorPage() {
               <Rocket aria-hidden="true" className="size-5" />
               Publicar versão {nextVersion}
             </Button>
-          </div>
+          </>
+        }
+      >
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <Tag tone={STATUS_TONES[data.status]}>{STATUS_LABELS[data.status]}</Tag>
+          {data.hasUnpublishedChanges && data.currentVersion !== null ? (
+            <span className="text-sm text-slate-700">Há alterações não publicadas</span>
+          ) : null}
         </div>
-      </div>
+      </PageHeader>
 
       {notice === null ? null : <Alert tone="success">{notice}</Alert>}
 
       <section
         aria-labelledby="dados"
-        className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+        className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
       >
-        <h2 id="dados" className="text-lg font-semibold">
+        <h2 id="dados" className="text-lg font-semibold text-slate-900">
           Dados da pesquisa
         </h2>
         <SurveyDataForm survey={data} onSaved={setNotice} />
       </section>
 
       <section aria-labelledby="perguntas" className="space-y-4">
-        <h2 id="perguntas" className="text-lg font-semibold">
+        <h2 id="perguntas" className="text-lg font-semibold text-slate-900">
           Perguntas específicas
         </h2>
         <QuestionsSection survey={data} onSaved={setNotice} />
@@ -133,9 +133,9 @@ export function SurveyEditorPage() {
 
       <section
         aria-labelledby="link-qr"
-        className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+        className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
       >
-        <h2 id="link-qr" className="text-lg font-semibold">
+        <h2 id="link-qr" className="text-lg font-semibold text-slate-900">
           Link e QR Code
         </h2>
         {data.links === null ? (
@@ -151,7 +151,7 @@ export function SurveyEditorPage() {
       </section>
 
       <section aria-labelledby="versoes" className="space-y-4">
-        <h2 id="versoes" className="text-lg font-semibold">
+        <h2 id="versoes" className="text-lg font-semibold text-slate-900">
           Histórico de versões
         </h2>
         {data.versions.length === 0 ? (
@@ -243,6 +243,6 @@ export function SurveyEditorPage() {
           ? 'O link e o QR Code deixam de receber respostas. Respostas e indicadores são mantidos.'
           : 'O link e o QR Code voltam a receber respostas na versão vigente.'}
       </ConfirmDialog>
-    </div>
+    </PageContainer>
   );
 }

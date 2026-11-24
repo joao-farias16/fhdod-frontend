@@ -1,9 +1,20 @@
-import { Download, FileCheck2, Upload } from 'lucide-react';
+import { CalendarDays, Download, FileCheck2, Upload } from 'lucide-react';
 import { useId, useRef, useState } from 'react';
 import { Link } from 'react-router';
 
 import { Alert } from '../../components/ui/Alert';
 import { Button } from '../../components/ui/Button';
+import { buttonClasses } from '../../components/ui/button-classes';
+import { CARD_CLASS, PageContainer, PageHeader } from '../../components/ui/Page';
+import {
+  TABLE_CLASS,
+  TableContainer,
+  TBODY_CLASS,
+  TD_CLASS,
+  TH_CLASS,
+  THEAD_CLASS,
+  TR_CLASS,
+} from '../../components/ui/Table';
 import { ApiError } from '../../lib/api-client';
 import { addDays, formatDateTime, formatLocalDate, localDateOf } from '../../lib/format';
 import { type RosterImport, useConfirmRoster, useValidateRoster } from './shifts-api';
@@ -84,24 +95,20 @@ export function RosterImportPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Importação de escalas</h1>
-          <p className="text-slate-700">
-            CSV em UTF-8, separado por ponto e vírgula, com até 2.000 linhas e 1 MB.
-          </p>
-        </div>
-        <Link
-          to="/admin/turnos"
-          className="inline-flex min-h-11 items-center rounded-lg px-3 font-medium text-brand-700 hover:bg-brand-50"
-        >
-          Ver escala
-        </Link>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Importação de escalas"
+        description="CSV em UTF-8, separado por ponto e vírgula, com até 2.000 linhas e 1 MB."
+        actions={
+          <Link to="/admin/turnos" className={buttonClasses('secondary')}>
+            <CalendarDays aria-hidden="true" className="size-5" />
+            Ver escala
+          </Link>
+        }
+      />
 
-      <section className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="space-y-1 text-sm text-slate-800">
+      <section className={`${CARD_CLASS} space-y-5 p-5 sm:p-6`}>
+        <div className="space-y-1 rounded-lg bg-slate-50 p-4 text-sm text-slate-800">
           <p>
             Cabeçalho: <code className="break-all">{ROSTER_HEADER}</code>
           </p>
@@ -110,9 +117,9 @@ export function RosterImportPage() {
             NOITE; horas HH:MM. Fim menor ou igual ao início termina no dia seguinte.
           </p>
         </div>
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="space-y-1">
-            <label htmlFor={fileId} className="block font-medium">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <label htmlFor={fileId} className="text-sm leading-5 font-semibold text-slate-800">
               Arquivo CSV
             </label>
             <input
@@ -120,7 +127,7 @@ export function RosterImportPage() {
               id={fileId}
               type="file"
               accept=".csv,text/csv"
-              className="block min-h-11 max-w-full text-sm file:mr-3 file:min-h-11 file:rounded-lg file:border file:border-neutral-border file:bg-white file:px-4 file:font-medium"
+              className="block min-h-11 w-full max-w-full cursor-pointer rounded-lg border border-dashed border-slate-400 bg-white p-1.5 text-sm text-slate-700 file:mr-3 file:min-h-10 file:cursor-pointer file:rounded-md file:border file:border-neutral-border file:bg-slate-50 file:px-4 file:font-semibold file:text-slate-900 hover:border-slate-600 hover:file:bg-slate-100"
               onChange={(event) => {
                 setFile(event.target.files?.[0] ?? null);
                 setResult(null);
@@ -147,18 +154,18 @@ export function RosterImportPage() {
 
       {result === null ? null : (
         <section aria-labelledby="resultado-importacao" className="space-y-4">
-          <h2 id="resultado-importacao" className="text-lg font-semibold">
+          <h2 id="resultado-importacao" className="text-lg font-semibold text-slate-900">
             Resultado de {result.fileName}
           </h2>
-          <dl className="grid grid-cols-3 gap-3 text-center">
+          <dl className="grid grid-cols-3 gap-3 sm:gap-4">
             {[
               ['Linhas', result.totalRows],
               ['Aceitas', result.acceptedRows],
               ['Com erro', result.rejectedRows],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-xl border border-slate-200 bg-white p-3">
-                <dt className="text-sm text-slate-700">{label}</dt>
-                <dd className="text-2xl font-bold">{value}</dd>
+              <div key={label} className={`${CARD_CLASS} p-4`}>
+                <dt className="text-sm font-semibold text-slate-600">{label}</dt>
+                <dd className="mt-1 text-2xl font-bold text-slate-900 tabular-nums">{value}</dd>
               </div>
             ))}
           </dl>
@@ -168,41 +175,41 @@ export function RosterImportPage() {
               <Alert tone="error" title="Arquivo recusado">
                 Nenhum turno foi gravado. Corrija as linhas abaixo e envie o arquivo de novo.
               </Alert>
-              <div
-                className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm"
-                tabIndex={0}
-                role="region"
-                aria-label="Erros por linha"
-              >
-                <table className="w-full min-w-[560px] text-left text-sm">
-                  <thead className="bg-slate-100">
+              <TableContainer label="Erros por linha">
+                <table className={`${TABLE_CLASS} min-w-[560px]`}>
+                  <thead className={THEAD_CLASS}>
                     <tr>
-                      <th scope="col" className="px-4 py-2">
+                      <th scope="col" className={TH_CLASS}>
                         Linha
                       </th>
-                      <th scope="col" className="px-4 py-2">
+                      <th scope="col" className={TH_CLASS}>
                         Coluna
                       </th>
-                      <th scope="col" className="px-4 py-2">
+                      <th scope="col" className={TH_CLASS}>
                         Problema
                       </th>
-                      <th scope="col" className="px-4 py-2">
+                      <th scope="col" className={TH_CLASS}>
                         Código
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200">
+                  <tbody className={TBODY_CLASS}>
                     {result.errors.map((error) => (
-                      <tr key={`${error.line}-${error.column}-${error.code}-${error.message}`}>
-                        <td className="px-4 py-2">{error.line}</td>
-                        <td className="px-4 py-2">{COLUMN_LABELS[error.column] ?? error.column}</td>
-                        <td className="px-4 py-2">{error.message}</td>
-                        <td className="px-4 py-2 font-mono text-xs">{error.code}</td>
+                      <tr
+                        key={`${error.line}-${error.column}-${error.code}-${error.message}`}
+                        className={TR_CLASS}
+                      >
+                        <td className={`${TD_CLASS} font-semibold tabular-nums`}>{error.line}</td>
+                        <td className={TD_CLASS}>{COLUMN_LABELS[error.column] ?? error.column}</td>
+                        <td className={TD_CLASS}>{error.message}</td>
+                        <td className={`${TD_CLASS} font-mono text-xs text-slate-600`}>
+                          {error.code}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </TableContainer>
             </>
           ) : (
             <>
@@ -219,12 +226,15 @@ export function RosterImportPage() {
                   {formatDateTime(result.expiresAt)}.
                 </Alert>
               )}
-              <ul className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white">
+              <ul className={`${CARD_CLASS} divide-y divide-slate-200`}>
                 {result.summary.map((item) => (
-                  <li key={`${item.sectorCode}-${item.teamCode}`} className="flex gap-3 px-4 py-2">
-                    <span className="font-medium">{item.sectorName}</span>
-                    <span>{item.teamName}</span>
-                    <span className="ml-auto">{item.shifts} turnos</span>
+                  <li
+                    key={`${item.sectorCode}-${item.teamCode}`}
+                    className="flex flex-wrap gap-x-3 gap-y-1 px-4 py-3 sm:px-5"
+                  >
+                    <span className="font-semibold text-slate-900">{item.sectorName}</span>
+                    <span className="text-slate-700">{item.teamName}</span>
+                    <span className="ml-auto font-medium tabular-nums">{item.shifts} turnos</span>
                   </li>
                 ))}
               </ul>
@@ -238,6 +248,6 @@ export function RosterImportPage() {
           )}
         </section>
       )}
-    </div>
+    </PageContainer>
   );
 }

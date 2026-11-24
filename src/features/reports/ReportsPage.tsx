@@ -1,7 +1,9 @@
+import { FileSpreadsheet } from 'lucide-react';
 import { useState } from 'react';
 
 import { Alert } from '../../components/ui/Alert';
-import { SelectField } from '../../components/ui/Field';
+import { CheckboxField, SelectField } from '../../components/ui/Field';
+import { Card, PageContainer, PageHeader } from '../../components/ui/Page';
 import { ApiError } from '../../lib/api-client';
 import { useMe } from '../auth/auth-context';
 import { type DashboardFilters, defaultPeriod } from '../dashboard/dashboard-api';
@@ -46,23 +48,15 @@ export function ReportsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 sm:px-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Relatórios</h1>
-        <p className="text-slate-700">
-          Gere planilhas do Excel com os filtros escolhidos. Datas no formato dd/mm/aaaa e horário
-          de Brasília.
-        </p>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Relatórios"
+        description="Gere planilhas do Excel com os filtros escolhidos. Datas no formato dd/mm/aaaa e horário de Brasília."
+      />
 
-      <section
-        aria-labelledby="tipo-titulo"
-        className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-      >
-        <h2 id="tipo-titulo" className="text-lg font-semibold">
-          Tipo de relatório
-        </h2>
+      <Card title="Tipo de relatório" titleId="tipo-titulo">
         <SelectField
+          fieldClassName="max-w-xl"
           label="Relatório"
           value={type}
           hint={DESCRIPTIONS[type]}
@@ -78,7 +72,7 @@ export function ReportsPage() {
           ))}
         </SelectField>
         {type === 'manifestations' ? (
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid items-start gap-4 border-t border-slate-200 pt-4 sm:grid-cols-2 lg:grid-cols-3">
             <SelectField
               label="Status"
               value={status}
@@ -107,26 +101,25 @@ export function ReportsPage() {
                 </option>
               ))}
             </SelectField>
-            <label className="flex min-h-11 items-center gap-3 self-end">
-              <input
-                type="checkbox"
-                checked={includeText}
-                onChange={(event) => {
-                  setIncludeText(event.target.checked);
-                }}
-                className="size-5"
-              />
-              Incluir textos (descrição e providências)
-            </label>
+            <CheckboxField
+              alignWithFields
+              className="sm:col-span-2 lg:col-span-1"
+              label="Incluir textos (descrição e providências)"
+              checked={includeText}
+              onChange={(event) => {
+                setIncludeText(event.target.checked);
+              }}
+            />
           </div>
         ) : null}
-      </section>
+      </Card>
 
       <DashboardFiltersForm
         key={JSON.stringify(filters)}
         filters={filters}
         submitLabel={exporter.isPending ? 'Gerando arquivo…' : 'Gerar arquivo Excel'}
         submitting={exporter.isPending}
+        submitIcon={<FileSpreadsheet aria-hidden="true" className="size-4" />}
         onApply={(current) => {
           generate(current);
         }}
@@ -148,6 +141,6 @@ export function ReportsPage() {
         ) : null}
         {exporter.isSuccess ? <Alert tone="success">Arquivo gerado: {exporter.data}</Alert> : null}
       </div>
-    </div>
+    </PageContainer>
   );
 }
